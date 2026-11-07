@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sky11astra.github.io/avtosklo-maks/sitemap.xml

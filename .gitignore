@@ -1,0 +1,14 @@
+# робочі матеріали — лише локально
+_src/
+_old_v1/
+*.bat
+*.ps1
+*.log
+ЯК_ЗАПУСТИТИ.txt
+js/main.js
+# невикористані зображення
+img/golf-*.webp
+img/hero-glass*.webp
+img/roof-scratch*.webp
+img/side-glass*.webp
+img/van-fit*.webp

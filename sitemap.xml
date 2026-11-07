@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://sky11astra.github.io/avtosklo-maks/</loc>
+    <lastmod>2026-11-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <image:image><image:loc>https://sky11astra.github.io/avtosklo-maks/img/og.jpg</image:loc></image:image>
+    <image:image><image:loc>https://sky11astra.github.io/avtosklo-maks/img/install-ford.webp</image:loc></image:image>
+    <image:image><image:loc>https://sky11astra.github.io/avtosklo-maks/img/facade.webp</image:loc></image:image>
+  </url>
+</urlset>
