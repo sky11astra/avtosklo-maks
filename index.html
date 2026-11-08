@@ -35,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="modulepreload" href="js/vendor/three/three.module.min.js">
-<link rel="stylesheet" href="css/style.css?v=70">
+<link rel="stylesheet" href="css/style.css?v=80">
 
 <script type="application/ld+json">
 {
@@ -293,7 +293,12 @@
         <i class="ch-bar" data-ch-bar aria-hidden="true"></i>
       </div>
       <div class="scroll-cue" aria-hidden="true"><i></i>Гортайте</div>
-      <p class="credit3d">3D-модель: <span data-credit>—</span></p>
+      <details class="info3d">
+        <summary aria-label="Звідки 3D-модель">i</summary>
+        <p class="credit3d">3D-модель: <span data-credit>—</span></p>
+      </details>
+      <button type="button" class="zoom-x" data-zoom-x hidden aria-label="Повернути звичайний розмір"><b>2×</b><span aria-hidden="true">✕</span></button>
+      <p class="gl-hint" aria-hidden="true"><span class="gh-touch">Крутіть пальцем · два пальці — збільшити</span><span class="gh-mouse">Тягніть, щоб повернути · подвійний клік — збільшити</span></p>
     </div>
   </div>
 </section>
@@ -406,6 +411,7 @@
         <g class="ws-stamp"><text x="497" y="254">LAMINATED · AS1</text><text x="497" y="262">E8 43R-001842</text><text x="497" y="270">DOT 863 M-2026</text></g>
         <text x="191" y="162" class="zoneA-t">Зона водія</text>
       </svg>
+      <p class="ws-hint" data-ws-hint aria-live="polite"><b>Торкніться скла</b> там, де скол</p>
     </div>
     <div class="verdict" data-verdict aria-live="polite">
       <p class="v-tag mono" data-v-tag>Ремонт</p>
@@ -492,6 +498,7 @@
     <img class="ba-after" data-ba-after src="img/ba-merc-after-720.webp" srcset="img/ba-merc-after-720.webp 720w, img/ba-merc-after.webp 1280w" sizes="(max-width: 760px) 92vw, 90vw" width="1280" height="714" loading="lazy" alt="Mercedes S-клас з новим чистим лобовим склом">
     <div class="ba-before-wrap"><img class="ba-before" data-ba-before src="img/ba-merc-before-720.webp" srcset="img/ba-merc-before-720.webp 720w, img/ba-merc-before.webp 1280w" sizes="(max-width: 760px) 92vw, 90vw" width="1280" height="714" loading="lazy" alt="Mercedes S-клас з розбитим лобовим склом"></div>
     <span class="ba-tag ba-tag-b">До</span><span class="ba-tag ba-tag-a">Після</span>
+    <div class="ba-wiper" aria-hidden="true"><i></i></div>
     <div class="ba-handle" aria-hidden="true"><i></i></div>
     <input class="ba-range" type="range" min="0" max="100" value="55" aria-label="Порівняти до і після">
   </div>
@@ -565,11 +572,11 @@
     <p class="sh-lead" data-reveal>Ціна самого скла залежить від марки й комплектації — назвемо її по телефону.</p>
   </header>
   <div class="pgrid">
-    <article class="pc" data-spot><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 8.5Q12 5 20.5 8.5L21.5 16Q12 18.5 2.5 16Z"/><path d="M8.5 12.2h7m-2.2-2.2 2.2 2.2-2.2 2.2"/></svg></i><p class="pc-n">Заміна скла</p><p class="pc-d">лобове, бокове, заднє — робота</p><p class="pc-p"><small>від</small> <span data-count="1000">1000</span> <small>грн</small></p></article>
-    <article class="pc" data-spot><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 8.5Q12 5 20.5 8.5L21.5 16Q12 18.5 2.5 16Z"/><path d="M14 9.4v5.4M11.3 12.1h5.4M12.1 10.2l3.8 3.8M15.9 10.2l-3.8 3.8"/></svg></i><p class="pc-n">Ремонт тріщин і сколів</p><p class="pc-d">близько години, без заміни скла</p><p class="pc-p"><small>від</small> <span data-count="500">500</span> <small>грн</small></p></article>
-    <article class="pc" data-spot><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17 7.5 7H19a2 2 0 0 1 2 2v8Z"/><path d="M9 17l4.5-10M14 17l4.5-10" opacity=".55"/></svg></i><p class="pc-n">Тонування</p><p class="pc-d">бокові й заднє скло плівкою</p><p class="pc-p"><small>від</small> <span data-count="1000">1000</span> <small>грн</small></p></article>
-    <article class="pc pc-free" data-spot><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m19.5 19.5-4.6-4.6"/></svg></i><p class="pc-n">Огляд і консультація</p><p class="pc-d">скажемо, ремонт чи заміна</p><p class="pc-p">безкоштовно</p></article>
-    <article class="pc pc-free" data-spot><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8-7 10-4-2-7-5.4-7-10V6Z"/><path d="m9 12 2 2 4-4"/></svg></i><p class="pc-n">Авто ЗСУ</p><p class="pc-d">робота</p><p class="pc-p">безкоштовно</p></article>
+    <article class="pc"><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 8.5Q12 5 20.5 8.5L21.5 16Q12 18.5 2.5 16Z"/><path d="M8.5 12.2h7m-2.2-2.2 2.2 2.2-2.2 2.2"/></svg></i><p class="pc-n">Заміна скла</p><p class="pc-d">лобове, бокове, заднє — робота</p><p class="pc-p"><small>від</small> <span data-count="1000">1000</span> <small>грн</small></p></article>
+    <article class="pc"><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 8.5Q12 5 20.5 8.5L21.5 16Q12 18.5 2.5 16Z"/><path d="M14 9.4v5.4M11.3 12.1h5.4M12.1 10.2l3.8 3.8M15.9 10.2l-3.8 3.8"/></svg></i><p class="pc-n">Ремонт тріщин і сколів</p><p class="pc-d">близько години, без заміни скла</p><p class="pc-p"><small>від</small> <span data-count="500">500</span> <small>грн</small></p></article>
+    <article class="pc"><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17 7.5 7H19a2 2 0 0 1 2 2v8Z"/><path d="M9 17l4.5-10M14 17l4.5-10" opacity=".55"/></svg></i><p class="pc-n">Тонування</p><p class="pc-d">бокові й заднє скло плівкою</p><p class="pc-p"><small>від</small> <span data-count="1000">1000</span> <small>грн</small></p></article>
+    <article class="pc pc-free"><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m19.5 19.5-4.6-4.6"/></svg></i><p class="pc-n">Огляд і консультація</p><p class="pc-d">скажемо, ремонт чи заміна</p><p class="pc-p">безкоштовно</p></article>
+    <article class="pc pc-free"><i class="pc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8-7 10-4-2-7-5.4-7-10V6Z"/><path d="m9 12 2 2 4-4"/></svg></i><p class="pc-n">Авто ЗСУ</p><p class="pc-d">робота</p><p class="pc-p">безкоштовно</p></article>
     <a class="pc pc-call" href="tel:+380504332288"><p class="pc-n">Дізнатись ціну скла</p><p class="pc-p">050 433-22-88</p><span aria-hidden="true">↗</span></a>
   </div>
 </section>
@@ -621,14 +628,30 @@
 </main>
 
 <footer class="foot">
-  <a class="ft-phone" href="tel:+380504332288" data-cursor="Дзвонити">050 433 22 88</a>
-  <div class="ft-row">
-    <p><b>Автоскло-Макс</b> · ПП «Макс» · автоскло в Івано-Франківську з 2005 року</p>
-    <p><a href="https://www.instagram.com/avtosklo.maks/" target="_blank" rel="noopener">Instagram</a> · <a href="https://maps.app.goo.gl/ggZSkr7YjKPGZY7x7" target="_blank" rel="noopener">Google Maps</a> · <a href="#top">Нагору</a></p>
-    <p>Сайт — <a href="https://orionstudio.io/ua/" target="_blank" rel="noopener">Оріон</a> · <span data-year>2026</span></p>
+  <div class="ft-top">
+    <a class="ft-call" href="tel:+380504332288" data-cursor="Дзвонити" aria-label="Подзвонити: 050 433 22 88">
+      <span class="ft-call-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.6 3.5h2.6l1.4 4.1-2 1.4a12 12 0 0 0 6.4 6.4l1.4-2 4.1 1.4v2.6a2.2 2.2 0 0 1-2.4 2.2A17.3 17.3 0 0 1 4.4 5.9a2.2 2.2 0 0 1 2.2-2.4Z"/></svg></span>
+      <span class="ft-call-t"><small>Натисніть — і телефон набере майстра</small><b>050 433 22 88</b></span>
+      <span class="ft-call-go" aria-hidden="true">↗</span>
+    </a>
+    <button type="button" class="ft-up" data-top aria-label="Нагору сторінки"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg><span>Нагору</span></button>
   </div>
-  <p class="ft-credit">3D-моделі: <a href="https://sketchfab.com/3d-models/2023-jeep-wrangler-rubicon-392-20th-anniversary-7247a74596224c3dadc219836430279c" target="_blank" rel="noopener">Jeep Wrangler — Ddiaz Design, CC BY-NC-SA 4.0</a> · <a href="https://sketchfab.com/3d-models/vw-golf-gti-mk7-wwwvecarzcom-60c87f48ba28491c9748a083371fd8ce" target="_blank" rel="noopener">VW Golf GTI — vecarz, CC BY-NC 4.0</a> · <a href="https://sketchfab.com/3d-models/volkswagen-crafter-647fb3d619c645a4b8e62d80db7cab98" target="_blank" rel="noopener">VW Crafter — geyges</a> · <a href="https://sketchfab.com/3d-models/mercedes-s-class-581e6ce2ba48448a96dc3512d9385bc2" target="_blank" rel="noopener">Mercedes S-Class — dmas, CC BY 4.0</a>. Зображення авто — ілюстрація, не реклама марок.</p>
+  <div class="ft-grid">
+    <div><p class="ft-h">Автоскло-Макс</p><p>ПП «Макс» · автоскло з 2005 року<br>Івано-Франківськ, Угорники, вул. Тисменицька, 249Б</p></div>
+    <div><p class="ft-h">Графік</p><p>Пн–Пт 9:00–18:00<br>Сб 9:00–15:00 · Нд — вихідний</p></div>
+    <div><p class="ft-h">Телефони</p><p><a href="tel:+380504332288">050 433-22-88</a><br><a href="tel:+380674332288">067 433-22-88</a> — Максим</p></div>
+    <div><p class="ft-h">Ми в мережі</p><p><a href="https://www.instagram.com/avtosklo.maks/" target="_blank" rel="noopener">Instagram</a><br><a href="https://maps.app.goo.gl/ggZSkr7YjKPGZY7x7" target="_blank" rel="noopener">Google Maps · 4,8 ★</a></p></div>
+  </div>
+  <div class="ft-row">
+    <p>© <span data-year>2026</span> Автоскло-Макс</p>
+    <p>Сайт — <a href="https://orionstudio.io/ua/" target="_blank" rel="noopener">Оріон</a></p>
+    <details class="ft-info">
+      <summary aria-label="Про 3D-моделі на сайті">i</summary>
+      <p class="ft-credit">3D-моделі: <a href="https://sketchfab.com/3d-models/2023-jeep-wrangler-rubicon-392-20th-anniversary-7247a74596224c3dadc219836430279c" target="_blank" rel="noopener">Jeep Wrangler — Ddiaz Design, CC BY-NC-SA 4.0</a> · <a href="https://sketchfab.com/3d-models/vw-golf-gti-mk7-wwwvecarzcom-60c87f48ba28491c9748a083371fd8ce" target="_blank" rel="noopener">VW Golf GTI — vecarz, CC BY-NC 4.0</a> · <a href="https://sketchfab.com/3d-models/volkswagen-crafter-647fb3d619c645a4b8e62d80db7cab98" target="_blank" rel="noopener">VW Crafter — geyges</a> · <a href="https://sketchfab.com/3d-models/mercedes-s-class-581e6ce2ba48448a96dc3512d9385bc2" target="_blank" rel="noopener">Mercedes S-Class — dmas, CC BY 4.0</a>. Зображення авто — ілюстрація, не реклама марок.</p>
+    </details>
+  </div>
 </footer>
+<button type="button" class="to-top" data-top aria-label="Нагору сторінки"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
 
 <nav class="mcta" aria-label="Швидкий зв'язок">
   <a class="btn" href="tel:+380504332288">Подзвонити</a>
@@ -671,6 +694,6 @@
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/vendor/lenis.min.js" defer></script>
-<script type="module" src="js/app.js?v=70"></script>
+<script type="module" src="js/app.js?v=80"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Автоскло-Макс v7 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v8 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -436,7 +436,7 @@ function studioEnv(renderer) {
 /* ---------- 3D ---------- */
 const canvas = $('[data-gl]');
 const stageEl = $('.stage');
-const state = { c: 0, chapter: 0, spin: 0, mouseX: 0, mouseY: 0, drag: 0, dragV: 0, dragging: false, intro: 0, tintOn: 0 };
+const state = { c: 0, chapter: 0, spin: 0, mouseX: 0, mouseY: 0, drag: 0, dragV: 0, dragging: false, intro: 0, tintOn: 0, zoom: 1 };
 let E = null; // рушій
 
 function webglOK() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
@@ -597,8 +597,10 @@ async function init3D() {
   // на телефоні ставимо авто посередині вільної смуги між перемикачем і заголовком
   let band = null;
   function measureBand() {
-    const g = $('.gar-t'), hz = $('.ch-hero'); if (!g || !hz) return;
-    const s = stageEl.getBoundingClientRect(), top = g.getBoundingClientRect().bottom - s.top, bot = hz.getBoundingClientRect().top - s.top;
+    const g = $('.gar-t'), hz = $('.ch-hero'), nv = $('.ch-nav'); if (!g || !hz) return;
+    const s = stageEl.getBoundingClientRect(), bot = hz.getBoundingClientRect().top - s.top;
+    let top = g.getBoundingClientRect().bottom - s.top;
+    if (nv) { const r = nv.getBoundingClientRect(); if (r.top - s.top < s.height / 2) top = Math.max(top, r.bottom - s.top); }
     band = bot - top > 40 && s.height ? clamp(.5 - (top + bot) / 2 / s.height, -.05, .2) : null;
   }
   document.fonts && document.fonts.ready.then(measureBand);
@@ -607,7 +609,8 @@ async function init3D() {
 
   let current = null, busy = false;
   const curP = new THREE.Vector3(), curT = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
-  let curFov = 30, curShift = 0, curOffY = 0, visible = true, firstFrame = true;
+  let curFov = 30, curShift = 0, curOffY = 0, visible = true, firstFrame = true, zoomCur = 1;
+  const LIM = 1.05; // авто повертається пальцем максимум на ±60° і пружинить назад — закрутити не вийде
   new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(stageEl);
   const clock = new THREE.Timer();
   const hotEls = $$('[data-hot]');
@@ -691,7 +694,11 @@ async function init3D() {
     const heroW = 1 - clamp(c, 0, 1), tintW = clamp(c - 4, 0, 1), reqW = clamp(c - 5, 0, 1);
     // поворотний стіл + перетягування
     state.spin += dt * .12 * heroW;
-    if (!state.dragging) { state.drag += state.dragV * dt; state.dragV *= Math.pow(.04, dt); }
+    if (!state.dragging) {
+      state.drag += state.dragV * dt; state.dragV *= Math.pow(.01, dt);
+      const over = Math.abs(state.drag) - LIM;
+      if (over > 0) { state.dragV = 0; state.drag = Math.sign(state.drag) * (LIM + over * Math.pow(.0004, dt)); }
+    }
     const canDrag = heroW > .5 || tintW > .5;
     if ((!canDrag || state.dragTo0) && !state.dragging) { // повертаємо авто до вибраного вікна
       const to = Math.round(state.drag / (Math.PI * 2)) * Math.PI * 2;
@@ -702,6 +709,8 @@ async function init3D() {
     if (state.intro < 1) state.intro = Math.min(1, state.intro + dt / 2.6);
     const ie = 1 - Math.pow(1 - state.intro, 3);
     tmpP.sub(tmpT).multiplyScalar(lerp(1.7, 1, ie)).add(tmpT); tmpP.y += lerp(1.2, 0, ie);
+    zoomCur = lerp(zoomCur, state.zoom, 1 - Math.pow(.002, dt));
+    tmpP.sub(tmpT).multiplyScalar(1 / zoomCur).add(tmpT); // збільшення: камера ближче до тієї ж точки
     const k = firstFrame ? 1 : 1 - Math.pow(.0009, dt); firstFrame = false;
     curP.lerp(tmpP, k); curT.lerp(tmpT, k);
     curFov = lerp(curFov, lerp(Pi.fov, Pj.fov, f), k);
@@ -811,7 +820,7 @@ async function init3D() {
   function selectWin(sel, kind = 'chip', animate = true) {
     state.sel = sel; state.kind = kind;
     const gs = window.gsap;
-    if (!sel || !current) { if (gs) gs.killTweensOf(state); state.selGlow = 0; state.chipGrow = 0; if (current) current.selPre = null; return; }
+    if (!sel || !current) { if (gs) gs.killTweensOf(state, 'selGlow,chipGrow'); state.selGlow = 0; state.chipGrow = 0; if (current) current.selPre = null; return; }
     const car = current, A = car.anchors, S = car.size;
     let p = sel.point && sel.car === car.key ? sel.point.clone() : null;
     if (!p) { // точка за замовчуванням: трохи збоку від центру скла
@@ -836,31 +845,49 @@ async function init3D() {
     car.selPre = selPreset(car, sel.zone, sel.side, p);
     state.dragTo0 = true; state.dragV = 0;
     if (gs && !reduce && animate) {
-      gs.killTweensOf(state);
+      gs.killTweensOf(state, 'selGlow,chipGrow');
       gs.fromTo(state, { selGlow: 1 }, { selGlow: .38, duration: 1.8, ease: 'power2.out', delay: .3 });
       gs.fromTo(state, { chipGrow: 0 }, { chipGrow: 1, duration: kind === 'chip' ? .9 : 1.5, ease: 'expo.out', delay: .55 });
     } else { state.selGlow = .38; state.chipGrow = 1; }
   }
 
   // перетягування мишкою / пальцем
-  let lastX = 0, lastT = 0;
+  let lastX = 0, lastT = 0, pinch = null;
+  const pts = new Map(), zoomBtn = $('[data-zoom-x]');
+  const setZoom = z => {
+    state.zoom = clamp(z, 1, 2); const on = state.zoom > 1.03;
+    stageEl.classList.toggle('is-zoomed', on);
+    if (zoomBtn) { zoomBtn.hidden = !on; const t = $('b', zoomBtn); if (t) t.textContent = state.zoom.toFixed(1).replace('.', ',') + '×'; }
+  };
+  zoomBtn && zoomBtn.addEventListener('click', () => setZoom(1));
+  const endDrag = () => { state.dragging = false; stageEl.classList.remove('is-dragging'); };
   canvas.addEventListener('pointerdown', e => {
-    if (!(state.c < .5 || state.c > 4.5)) return;
+    pts.set(e.pointerId, [e.clientX, e.clientY]); stageEl.classList.add('was-touched');
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: state.zoom }; endDrag(); return; }
+    if (pts.size > 2 || !(state.c < .5 || state.c > 4.5)) return;
     state.dragging = true; state.dragTo0 = false; lastX = e.clientX; lastT = performance.now(); state.dragV = 0;
-    canvas.setPointerCapture(e.pointerId); stageEl.classList.add('is-dragging');
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {} stageEl.classList.add('is-dragging');
   });
   canvas.addEventListener('pointermove', e => {
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; setZoom(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d); return; }
     if (!state.dragging) return;
-    const now = performance.now(), dx = e.clientX - lastX; state.drag += dx * .008; state.dragV = dx * .008 / Math.max(.008, (now - lastT) / 1000); lastX = e.clientX; lastT = now;
+    const now = performance.now(), dx = e.clientX - lastX;
+    const past = Math.abs(state.drag) > LIM && Math.sign(dx) === Math.sign(state.drag); // за межею — тугіше
+    state.drag = clamp(state.drag + dx * .008 * (past ? .22 : 1), -LIM * 1.25, LIM * 1.25);
+    state.dragV = clamp(dx * .008 / Math.max(.008, (now - lastT) / 1000), -2.2, 2.2); lastX = e.clientX; lastT = now;
   });
-  const endDrag = () => { state.dragging = false; stageEl.classList.remove('is-dragging'); };
-  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+  const lift = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; endDrag(); };
+  canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
+  // мишка: подвійний клік або жест «зведення» на тачпаді (Ctrl + колесо) — збільшити
+  canvas.addEventListener('dblclick', () => setZoom(state.zoom > 1.4 ? 1 : 2));
+  canvas.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); setZoom(state.zoom * Math.exp(-e.deltaY * .01)); }, { passive: false });
 
   const first = await load(START, p => setProgress(p * .95));
   first.uScan.value.set(-.02, 0, 1, 0);
   setCar(first);
   frame();
-  E = { renderer, scene, camera, load, switchTo, reveal, pick, selectWin, get current() { return current; }, get busy() { return busy; }, cache, G, state };
+  E = { renderer, scene, camera, load, switchTo, reveal, pick, selectWin, setZoom, get current() { return current; }, get busy() { return busy; }, cache, G, state };
   window.__am = E;
   setProgress(1);
   // інші авто довантажуємо, коли браузер вільний (на телефоні чи в режимі економії трафіку — лише за потреби)
@@ -936,7 +963,7 @@ async function main() {
   if (DEV) { // ?dev — без прелоадера, для перевірки
     loaderEl.hidden = true; lenis && lenis.start(); document.documentElement.classList.add('is-in', 'dev');
     if (E) { E.current.uScan.value.z = 0; state.intro = 1; }
-    window.__go = c => { state.c = c; setCh(Math.round(c)); };
+    window.__go = c => goCh(Math.round(c));
   } else setTimeout(() => shatterOut(heroIn), 250);
 
   /* історія з прокруткою: 0 герой, 1 лобове, 2 бокові, 3 заднє, 4 люк, 5 тонування, 6 заявка */
@@ -953,16 +980,22 @@ async function main() {
     const nav = $('.ch-nav', story), on = navBtns.find(b => +b.dataset.go === idx);
     if (nav && on && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: on.offsetLeft - nav.clientWidth / 2 + on.offsetWidth / 2, behavior: reduce ? 'auto' : 'smooth' });
   };
-  const st = ScrollTrigger.create({
-    trigger: story, start: 'top top', end: () => '+=' + innerHeight * (N - 1) * 1.25, pin: '.stage', pinSpacing: true, scrub: true, anticipatePin: 1,
-    onUpdate: self => {
-      state.c = clamp(self.progress / K, 0, 1) * (N - 1);
-      setCh(clamp(Math.round(state.c - .1), 0, N - 1));
-      gsap.set('.giant', { yPercent: -self.progress * 60, opacity: 1 - clamp(self.progress * 3, 0, 1) * .8 });
-      const bar = $('[data-ch-bar]'); if (bar) bar.style.transform = `scaleX(${clamp(self.progress / K, 0, 1)})`;
-    },
+  // розділ обирають дотиком по кнопці (чи по склу), а не прокруткою — сторінка гортається вільно
+  const chBar = $('[data-ch-bar]');
+  const storyTop = () => story.getBoundingClientRect().top + scrollY;
+  const goCh = i => {
+    i = clamp(i, 0, N - 1);
+    if (Math.abs(story.getBoundingClientRect().top) > 40) scrollToY(storyTop(), 1);
+    setCh(i); E && E.setZoom(1);
+    gsap.to(state, { c: i, duration: reduce ? 0 : clamp(.9 + Math.abs(i - state.c) * .16, .9, 1.7), ease: 'power3.inOut', overwrite: 'auto' });
+    gsap.to('.giant', { yPercent: i ? -24 : 0, opacity: i ? .22 : 1, duration: 1.2, ease: 'power3.out', overwrite: 'auto' });
+    if (chBar) chBar.style.transform = `scaleX(${i / (N - 1)})`;
+  };
+  addEventListener('keydown', e => {
+    if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.target.closest('input, textarea, select, [role="tablist"], dialog')) return;
+    const r = story.getBoundingClientRect(); if (r.top > innerHeight * .4 || r.bottom < innerHeight * .6) return;
+    e.preventDefault(); goCh(state.chapter + (e.key === 'ArrowRight' ? 1 : -1));
   });
-  const goCh = i => scrollToY(st.start + (i / (N - 1)) * K * (st.end - st.start) + 2);
   navBtns.forEach(b => b.addEventListener('click', () => goCh(+b.dataset.go)));
   $$('[data-hot]').forEach(b => b.addEventListener('click', () => goCh(+b.dataset.go)));
   $$('[data-go-ch]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); goCh(+a.dataset.goCh); }));
@@ -993,7 +1026,7 @@ async function main() {
   });
   $$('[data-show-car]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.showCar; userCar = ''; if (qIn) qIn.value = ''; paintCarUI(activeCar);
-    scrollToY(st.start + 2, 1.6);
+    goCh(0);
     setTimeout(() => chooseCar(k), lenis ? 900 : 300);
   }));
 
@@ -1147,8 +1180,20 @@ async function main() {
   const ba = $('[data-ba]');
   if (ba) {
     const r = $('.ba-range', ba); const set = v => { ba.style.setProperty('--p', v + '%'); r.value = v; };
-    r.addEventListener('input', () => set(r.value));
-    const demo = () => { if (reduce) return; const o = { v: +r.value }; gsap.timeline().to(o, { v: 88, duration: .6, ease: 'power2.inOut', onUpdate: () => set(o.v) }).to(o, { v: 14, duration: 1.2, ease: 'expo.inOut', onUpdate: () => set(o.v) }).to(o, { v: 55, duration: .9, ease: 'expo.out', onUpdate: () => set(o.v) }); };
+    // вау-показ: двірник змітає розбите скло дугою — під ним уже нове; потім повзунок для порівняння
+    let tl = null;
+    const wipeEnd = () => { ba.classList.remove('is-wiping'); ba.style.setProperty('--wa', '0deg'); };
+    r.addEventListener('input', () => { if (tl) { tl.kill(); tl = null; wipeEnd(); } set(r.value); });
+    const demo = () => {
+      if (reduce) { set(55); return; }
+      if (tl) tl.kill();
+      const o = { a: 0, v: 0 };
+      tl = gsap.timeline({ onComplete: () => { tl = null; } })
+        .call(() => { set(100); ba.style.setProperty('--wa', '0deg'); ba.classList.add('is-wiping'); })
+        .to(o, { a: 180, duration: 1.6, ease: 'power2.inOut', onUpdate: () => ba.style.setProperty('--wa', o.a.toFixed(1) + 'deg') }, .25)
+        .call(() => { set(0); wipeEnd(); })
+        .to(o, { v: 55, duration: 1.3, ease: 'power3.inOut', onUpdate: () => set(o.v) }, '+=.35');
+    };
     ScrollTrigger.create({ trigger: ba, start: 'top 70%', once: true, onEnter: demo });
     const tabs = $$('[data-ba-case]'), imgB = $('[data-ba-before]'), imgA = $('[data-ba-after]'), fb = $('[data-ba-fb]'), fa = $('[data-ba-fa]');
     const show = k => {
@@ -1166,8 +1211,8 @@ async function main() {
       });
     };
     tabs.forEach(t => t.addEventListener('click', () => { if (t.getAttribute('aria-selected') !== 'true') show(t.dataset.baCase); }));
-    const tl = $('.ba-tabs');
-    tl && tl.addEventListener('keydown', e => {
+    const tabList = $('.ba-tabs');
+    tabList && tabList.addEventListener('keydown', e => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       const i = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true'), n = tabs[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
       n.focus(); show(n.dataset.baCase);
@@ -1185,6 +1230,11 @@ async function main() {
   openStatus();
   mobileCta(ScrollTrigger);
   const yr = $('[data-year]'); if (yr) yr.textContent = new Date().getFullYear();
+  // нагору: кнопка у футері й плаваюча стрілка, що з'являється після першого екрана
+  $$('[data-top]').forEach(b => b.addEventListener('click', () => scrollToY(0, 1.6)));
+  const upBtn = $('.to-top');
+  if (upBtn) { const t = () => upBtn.classList.toggle('is-on', scrollY > innerHeight * 1.3); addEventListener('scroll', t, { passive: true }); t(); }
+  const footEl = $('.foot'); if (upBtn && footEl) new IntersectionObserver(es => upBtn.classList.toggle('is-foot', es[0].isIntersecting)).observe(footEl);
   addEventListener('load', () => ScrollTrigger.refresh());
   setTimeout(() => ScrollTrigger.refresh(), 600);
 }
@@ -1238,9 +1288,11 @@ function checker(gsap) {
   const sizesBox = $('[data-sizes]'), g = $('[data-crack]', svg);
   const vTitle = $('[data-v-title]'), vText = $('[data-v-text]'), verdict = $('[data-verdict]'), sms = $('[data-sms]');
   const SIZES = { chip: [['s', 'до 1 см'], ['m', '1–2,5 см'], ['l', 'більше 2,5 см']], crack: [['s', 'до 15 см'], ['m', '15–30 см'], ['l', 'довша за 30 см']] };
-  let kind = 'chip', size = 's', pt = [430, 150], seed = 3;
-  const renderSizes = () => { sizesBox.innerHTML = SIZES[kind].map(([v, t]) => `<label><input type="radio" name="size" value="${v}" ${v === size ? 'checked' : ''}><span>${t}</span></label>`).join(''); $$('input', sizesBox).forEach(inp => inp.addEventListener('change', () => { size = inp.value; seed++; update(); })); };
-  $$('input[name="kind"]').forEach(inp => inp.addEventListener('change', () => { kind = inp.value; size = 's'; seed++; renderSizes(); update(); }));
+  let kind = 'chip', size = 's', pt = [430, 150], seed = 3, userPath = null, drawing = null;
+  const hint = $('[data-ws-hint]'), CM = .25; // 1 одиниця схеми ≈ 0,25 см (лобове ~145 см завширшки)
+  const renderSizes = () => { sizesBox.innerHTML = SIZES[kind].map(([v, t]) => `<label><input type="radio" name="size" value="${v}" ${v === size ? 'checked' : ''}><span>${t}</span></label>`).join(''); $$('input', sizesBox).forEach(inp => inp.addEventListener('change', () => { size = inp.value; seed++; userPath = null; update(); })); };
+  const setHint = () => { svg.classList.toggle('is-draw', kind === 'crack'); if (hint) hint.innerHTML = kind === 'crack' ? '<b>Проведіть пальцем по склу</b> — там, де тріщина, і в її напрямку' : '<b>Торкніться скла</b> там, де скол'; };
+  $$('input[name="kind"]').forEach(inp => inp.addEventListener('change', () => { kind = inp.value; size = 's'; seed++; userPath = null; renderSizes(); setHint(); update(); }));
   const edgeOf = (x, y) => { const xl = 62 - 52 * (y - 22) / 256, xr = 538 + 52 * (y - 22) / 256; return (x - xl < 34) || (xr - x < 34) || y < 44 || y > 252; };
   const inA = (x, y) => x > 96 && x < 286 && y > 70 && y < 240;
   function drawDamage() {
@@ -1249,15 +1301,30 @@ function checker(gsap) {
       const R = { s: 15, m: 26, l: 42 }[size]; const c = genCrack(pt[0], pt[1], R, rnd, { rays: 7 + Math.floor(rnd() * 4), rings: 1 });
       c.lines.forEach(l => paths.push({ d: 'M' + l.pts.map(p => p.map(n => n.toFixed(1)).join(' ')).join(' L'), w: l.w * 1.5 }));
       paths.push({ d: `M${pt[0] - R * .35} ${pt[1]} a${R * .35} ${R * .35} 0 1 0 ${R * .7} 0 a${R * .35} ${R * .35} 0 1 0 ${-R * .7} 0`, w: 2.2, fill: true });
+    } else if (userPath) {
+      const P = userPath, main = [P[0]];
+      for (let i = 1; i < P.length; i++) {
+        const [x0, y0] = P[i - 1], [x1, y1] = P[i], d = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.round(d / 9)), nx = -(y1 - y0) / (d || 1), ny = (x1 - x0) / (d || 1);
+        for (let k = 1; k <= n; k++) { const t = k / n, j = k === n && i === P.length - 1 ? 0 : (rnd() - .5) * 5; main.push([x0 + (x1 - x0) * t + nx * j, y0 + (y1 - y0) * t + ny * j]); }
+      }
+      paths.push({ d: 'M' + main.map(q => q.map(v => v.toFixed(1)).join(' ')).join(' L'), w: 2.2 });
+      for (let i = 6; i < main.length - 3; i += 5 + Math.floor(rnd() * 6)) {
+        if (rnd() < .45) continue;
+        const [x, y] = main[i], [px, py] = main[i - 1]; let a = Math.atan2(y - py, x - px) + (rnd() < .5 ? -1 : 1) * (.5 + rnd() * .6), bx = x, by = y; const bp = [[x, y]];
+        for (let k = 0; k < 3; k++) { a += (rnd() - .5) * .5; bx += Math.cos(a) * (5 + rnd() * 7); by += Math.sin(a) * (5 + rnd() * 7); bp.push([bx, by]); }
+        paths.push({ d: 'M' + bp.map(q => q.map(v => v.toFixed(1)).join(' ')).join(' L'), w: 1.1 });
+      }
+      paths.push({ d: `M${P[0][0] - 3} ${P[0][1]} a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0`, w: 2, fill: true });
     } else {
       const L = { s: 70, m: 130, l: 250 }[size];
       for (let k = 0; k < (size === 'l' ? 2 : 1); k++) { let a = (k ? Math.PI : 0) + (rnd() - .5) * .8, x = pt[0], y = pt[1]; const pts = [[x, y]]; for (let i = 0; i < 14; i++) { a += (rnd() - .5) * .5; x += Math.cos(a) * L / 14; y += Math.sin(a) * L / 14 * .7; pts.push([x, y]); } paths.push({ d: 'M' + pts.map(p => p.map(n => n.toFixed(1)).join(' ')).join(' L'), w: 2.2 }); }
       paths.push({ d: `M${pt[0] - 3} ${pt[1]} a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0`, w: 2, fill: true });
     }
+    if (userPath && kind === 'crack') { const L = userPath.reduce((a, q, i) => i ? a + Math.hypot(q[0] - userPath[i - 1][0], q[1] - userPath[i - 1][1]) : 0, 0), e = userPath[userPath.length - 1], t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('x', Math.min(540, e[0] + 8)); t.setAttribute('y', Math.max(24, e[1] - 8)); t.setAttribute('class', 'ws-len'); t.textContent = `≈ ${Math.round(L * CM)} см`; g.appendChild(t); }
     paths.forEach((p, i) => { const el = document.createElementNS('http://www.w3.org/2000/svg', 'path'); el.setAttribute('d', p.d); el.setAttribute('stroke-width', p.w); if (p.fill) el.setAttribute('fill', 'rgba(255,255,255,.75)'); g.appendChild(el); if (!reduce) { const len = el.getTotalLength(); el.style.strokeDasharray = len; el.style.strokeDashoffset = len; el.getBoundingClientRect(); el.style.transition = `stroke-dashoffset ${.5 + Math.random() * .3}s cubic-bezier(.2,.7,.1,1) ${i * .02}s`; el.style.strokeDashoffset = 0; } });
   }
   function update() {
-    const [x, y] = pt, e = edgeOf(x, y), a = inA(x, y), sizeTxt = SIZES[kind].find(s => s[0] === size)[1];
+    const [x, y] = pt, drawn = userPath && kind === 'crack', e = drawn ? userPath.some(q => edgeOf(q[0], q[1])) : edgeOf(x, y), a = drawn ? userPath.some(q => inA(q[0], q[1])) : inA(x, y), sizeTxt = SIZES[kind].find(s => s[0] === size)[1];
     let title, text, replace = false;
     if (kind === 'chip') {
       if (size === 'l') { title = 'Великий скол — радше заміна'; text = 'Скол більше 2,5 см ремонт тримає погано. Заміна — робота від 1000 грн плюс скло; часто встигаємо за день.'; replace = true; }
@@ -1270,13 +1337,33 @@ function checker(gsap) {
     }
     vTitle.textContent = title; vText.textContent = text; verdict.classList.toggle('is-replace', replace);
     const tag = $('[data-v-tag]'); if (tag) tag.textContent = replace ? 'Заміна' : 'Ремонт';
-    sms.href = `sms:${PHONE}?&body=` + encodeURIComponent(`Добрий день! ${kind === 'chip' ? 'Скол' : 'Тріщина'} ${sizeTxt} на лобовому склі${a ? ', у зоні водія' : ''}${e ? ', біля краю' : ''}. Авто: ... Скільки коштуватиме?`);
+    sms.href = `sms:${PHONE}?&body=` + encodeURIComponent(`Добрий день! ${kind === 'chip' ? 'Скол' : 'Тріщина'} ${userPath && kind === 'crack' ? '≈' + Math.round(userPath.reduce((a, q, i) => i ? a + Math.hypot(q[0] - userPath[i - 1][0], q[1] - userPath[i - 1][1]) : 0, 0) * CM) + ' см' : sizeTxt} на лобовому склі${a ? ', у зоні водія' : ''}${e ? ', біля краю' : ''}. Авто: ... Скільки коштуватиме?`);
     drawDamage();
     if (!reduce) gsap.fromTo([vTitle, vText], { y: 10, opacity: .2 }, { y: 0, opacity: 1, duration: .5, stagger: .05, ease: 'expo.out', overwrite: true });
   }
-  const outline = svg.querySelector('path');
-  svg.addEventListener('click', ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); if (outline.isPointInFill && !outline.isPointInFill(q)) return; pt = [q.x, q.y]; seed++; update(); });
-  renderSizes(); update();
+  const outline = svg.querySelector('path[fill="url(#wsg)"]') || svg.querySelector('path');
+  const toSvg = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  const inGlass = q => !outline.isPointInFill || outline.isPointInFill(q);
+  svg.addEventListener('click', ev => { if (kind === 'crack') return; const q = toSvg(ev); if (!inGlass(q)) return; pt = [q.x, q.y]; seed++; update(); });
+  // тріщина: ведемо пальцем — малюється одразу; довжина сама обирає розмір
+  svg.addEventListener('pointerdown', ev => {
+    if (kind !== 'crack') return; const q = toSvg(ev); if (!inGlass(q)) return;
+    ev.preventDefault(); drawing = { pts: [[q.x, q.y]], len: 0 }; try { svg.setPointerCapture(ev.pointerId); } catch (_) {}
+  });
+  svg.addEventListener('pointermove', ev => {
+    if (!drawing) return; const q = toSvg(ev), l = drawing.pts[drawing.pts.length - 1], d = Math.hypot(q.x - l[0], q.y - l[1]);
+    if (d < 5 || !inGlass(q)) return;
+    drawing.pts.push([q.x, q.y]); drawing.len += d;
+    g.innerHTML = `<path d="M${drawing.pts.map(v => v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join(' L')}" stroke-width="2.2" class="ws-live"/>`;
+  });
+  const finish = () => {
+    if (!drawing) return; const dr = drawing; drawing = null; seed++;
+    if (dr.len < 14) { userPath = null; pt = dr.pts[0]; update(); return; } // просто торкнулись — тріщина сама
+    userPath = dr.pts; pt = dr.pts[0];
+    const cm = dr.len * CM; size = cm <= 15 ? 's' : cm <= 30 ? 'm' : 'l'; renderSizes(); update();
+  };
+  svg.addEventListener('pointerup', finish); svg.addEventListener('pointercancel', finish);
+  renderSizes(); setHint(); update();
   if (!reduce) gsap.fromTo('.ws-refl', { attr: { x: -300 } }, { attr: { x: 900 }, duration: 3.5, repeat: -1, repeatDelay: 2, ease: 'power2.inOut' });
 }
 
