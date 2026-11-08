@@ -1,4 +1,4 @@
-/* Автоскло-Макс v6 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v7 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -99,7 +99,7 @@ function voronoi(pts, W, H) { return pts.map((p, i) => { let poly = [[0, 0], [W,
 
 /* ---------- прелоадер: скло тріскається й розлітається ---------- */
 const loaderEl = $('[data-loader]'), ldBar = $('[data-ld-bar]'), ldPct = $('[data-ld-pct]');
-function setProgress(p) { if (ldBar) ldBar.style.transform = `scaleX(${p})`; if (ldPct) ldPct.textContent = String(Math.round(p * 100)).padStart(2, '0'); }
+function setProgress(p) { if (loaderEl) loaderEl.style.setProperty('--p', p.toFixed(3)); if (ldBar) ldBar.style.transform = `scaleX(${p})`; if (ldPct) ldPct.textContent = String(Math.round(p * 100)).padStart(2, '0'); }
 function shatterOut(onBreak) {
   const W = innerWidth, H = innerHeight;
   if (reduce || W < 20 || H < 20 || document.hidden) { loaderEl.classList.add('is-done'); onBreak(); return; }
