@@ -1060,3 +1060,11 @@ body::after{content:"";position:fixed;inset:-50%;z-index:250;pointer-events:none
 .tw-wins button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .ch-tint.is-multi .sw-strip{display:none}
 .ch-tint .tv{align-items:flex-start;gap:10px}
+
+/* v13 — ряди кнопок тягнуться пальцем; згасання по краю показує, що є ще */
+.tw-wins{touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;--fl:0px;--fr:28px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--fl),#000 calc(100% - var(--fr)),transparent);mask-image:linear-gradient(90deg,transparent,#000 var(--fl),#000 calc(100% - var(--fr)),transparent)}
+.tw-wins.not-start{--fl:24px}
+.tw-wins.at-end{--fr:0px}
+.tw-wins.is-drag,.ch-nav.is-drag{cursor:grabbing}
+.tw-wins.is-drag button,.ch-nav.is-drag button{pointer-events:none}
+@media (max-width:760px){.ch-nav{touch-action:pan-y;user-select:none;-webkit-user-select:none}}

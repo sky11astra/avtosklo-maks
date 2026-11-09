@@ -1,4 +1,4 @@
-/* Автоскло-Макс v12 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v13 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -177,6 +177,30 @@ const FILMS = [
   { id: 'none', g: 'Спеціальні', n: 'Без плівки', d: 'без плівки', sw: 'linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.03))' },
 ];
 const FILM = Object.fromEntries(FILMS.map(f => [f.id, f]));
+/* Ряд кнопок, що не влазить на екран: тягнеться пальцем чи мишею; протягування не натискає кнопку */
+function dragRow(el) {
+  if (!el) return;
+  let id = null, x0 = 0, s0 = 0, moved = false, v = 0, lx = 0, lt = 0, raf = 0;
+  const edges = () => { el.classList.toggle('not-start', el.scrollLeft > 4); el.classList.toggle('at-end', el.scrollLeft + el.clientWidth >= el.scrollWidth - 4); };
+  el.addEventListener('scroll', edges, { passive: true }); edges();
+  el.addEventListener('pointerdown', e => { if (e.button) return; cancelAnimationFrame(raf); id = e.pointerId; x0 = lx = e.clientX; s0 = el.scrollLeft; moved = false; v = 0; lt = performance.now(); });
+  el.addEventListener('pointermove', e => {
+    if (e.pointerId !== id) return;
+    const dx = e.clientX - x0;
+    if (!moved && Math.abs(dx) > 6) { moved = true; try { el.setPointerCapture(id); } catch (_) {} el.classList.add('is-drag'); }
+    if (!moved) return;
+    el.scrollLeft = s0 - dx;
+    const now = performance.now(); v = (e.clientX - lx) / Math.max(1, now - lt) * 16; lx = e.clientX; lt = now;
+  });
+  const up = e => {
+    if (e.pointerId !== id) return; id = null; el.classList.remove('is-drag');
+    if (!moved || reduce) return;
+    const glide = () => { if (Math.abs(v) < .4) return; el.scrollLeft -= v; v *= .93; raf = requestAnimationFrame(glide); }; glide();
+  };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('click', e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+  new ResizeObserver(edges).observe(el);
+}
 function filmVecs(cfg, A, B) {
   if (!cfg) { A.set(.29, .37, .44, 1); B.set(0, 0, 0, 0); return; }
   // % керує кожною плівкою: менший % — темніше, насиченіше й щільніше; більший — світліше, блідіше й прозоріше
@@ -1237,6 +1261,8 @@ async function main() {
     G.uFilmP.value.x = SLOTS.indexOf(k);
     if (!reduce) gsap.fromTo(G.uFilmP.value, { y: 1 }, { y: 0, duration: .9, ease: 'power2.out', overwrite: true });
     applyTint(false);
+    const chip = winBtns.find(b => b.dataset.winT === k);
+    if (chip && winRow) winRow.scrollTo({ left: chip.offsetLeft - winRow.offsetLeft - (winRow.clientWidth - chip.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
   }
   if (tintIn) {
     tintIn.addEventListener('input', () => { setPct(TINT[+tintIn.value][0]); applyTint(false); }); // повзунок ходить по реальних плівках
@@ -1257,6 +1283,7 @@ async function main() {
     addEventListener('keydown', e => { if (e.key === 'Escape' && !filmPanel.hidden) { openPanel(false); filmOpen.focus(); } });
   }
   winBtns.forEach(b => b.addEventListener('click', () => pickTintWin(b.dataset.winT)));
+  dragRow(winRow); dragRow($('.ch-nav', story));
   const multiIn = $('#tint-multi');
   multiIn && multiIn.addEventListener('change', () => {
     const base = tintWins[curKey()] || { f: 'black', v: 35 }; // зняли галочку — усі вікна знову як вибране
