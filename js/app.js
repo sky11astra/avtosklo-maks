@@ -1,4 +1,4 @@
-/* Автоскло-Макс v11 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v12 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -158,31 +158,38 @@ const FILMS = [
   { id: 'carbon', g: 'Тонувальні', n: 'Вуглецева', t: [.28, .31, .34], sw: 'linear-gradient(135deg,#3a3d40,#101214)' },
   { id: 'ceramic', g: 'Тонувальні', n: 'Керамічна', t: [.24, .36, .48], sw: 'linear-gradient(135deg,#3b4f64,#0c1219)' },
   { id: 'dyed', g: 'Тонувальні', n: 'Фарбована', t: [.34, .29, .4], sw: 'linear-gradient(135deg,#453c50,#110e16)' },
-  { id: 'metal', g: 'Тонувальні', n: 'Металізована', c: '#59626b', m: .35, sw: mirSw('#79828c', '#3b424a', '#8a939d', '#23282e') },
+  { id: 'metal', g: 'Тонувальні', n: 'Металізована', t: [.3, .33, .38], m: .35, sw: mirSw('#79828c', '#3b424a', '#8a939d', '#23282e') },
   { id: 'bronze', g: 'Кольорові', n: 'Бронзова', c: '#8a5a2b', d: 'кольорова · теплий відтінок', sw: 'linear-gradient(135deg,#a2703c,#4a2e14)' },
   { id: 'blue', g: 'Кольорові', n: 'Синя', c: '#1f5fd0', d: 'кольорова · синій відтінок', sw: 'linear-gradient(135deg,#3f82ee,#123b86)' },
-  { id: 'silver', g: 'Дзеркальні', n: 'Срібне дзеркало', c: '#cfd6de', m: 1, v: 15, d: 'дзеркальна · салон не видно', sw: mirSw('#f5f8fb', '#8d97a3', '#e9eef3', '#5b6571') },
+  { id: 'silver', g: 'Дзеркальні', n: 'Срібне дзеркало', c: '#cfd6de', np: 1, m: 1, v: 15, d: 'дзеркальна · салон не видно', sw: mirSw('#f5f8fb', '#8d97a3', '#e9eef3', '#5b6571') },
   { id: 'gold', g: 'Дзеркальні', n: 'Золоте дзеркало', c: '#e0a93a', m: 1, v: 15, d: 'дзеркальна · золотий блиск', sw: mirSw('#ffe9a8', '#b9832a', '#ffd877', '#7a5213') },
   { id: 'mbronze', g: 'Дзеркальні', n: 'Бронзове дзеркало', c: '#a8703a', m: 1, v: 15, d: 'дзеркальна · бронзовий блиск', sw: mirSw('#e3b98c', '#7f5128', '#d29c66', '#4c2e14') },
   { id: 'sky', g: 'Дзеркальні', n: 'Блакитне дзеркало', c: '#6fb3ff', m: 1, v: 15, d: 'дзеркальна · блакитний блиск', sw: mirSw('#d4e9ff', '#4a87cc', '#a9d2ff', '#27548a') },
-  { id: 'navy', g: 'Дзеркальні', n: 'Темно-синє дзеркало', c: '#2a4fb0', m: 1, v: 15, d: 'дзеркальна · темно-синя', sw: mirSw('#7b98e0', '#1d3a85', '#5b7cd0', '#0f2150') },
+  { id: 'navy', g: 'Дзеркальні', n: 'Темно-синє дзеркало', c: '#2a4fb0', m: 1, mg: .6, v: 15, d: 'дзеркальна · темно-синя', sw: mirSw('#7b98e0', '#1d3a85', '#5b7cd0', '#0f2150') },
   { id: 'mgreen', g: 'Дзеркальні', n: 'Зелене дзеркало', c: '#3f9e62', m: 1, v: 15, d: 'дзеркальна · зелений блиск', sw: mirSw('#a6e0bb', '#2c7748', '#7cc99a', '#17472a') },
-  { id: 'mblack', g: 'Дзеркальні', n: 'Чорне дзеркало', c: '#4a4f57', m: 1, v: 5, d: 'дзеркальна · майже чорна', sw: mirSw('#8d939c', '#25292f', '#6d737c', '#0e1013') },
+  { id: 'mblack', g: 'Дзеркальні', n: 'Чорне дзеркало', c: '#4a4f57', m: 1, mg: .3, v: 5, d: 'дзеркальна · майже чорна', sw: mirSw('#8d939c', '#25292f', '#6d737c', '#0e1013') },
   { id: 'chblue', g: 'Хамелеон', n: 'Синьо-фіолетовий', ir: [.36, -.25], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#2b6bff,#6a44ff 55%,#c04fe0)' },
   { id: 'chgreen', g: 'Хамелеон', n: 'Зелено-фіолетовий', ir: [.67, -.5], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#2fd07a,#2d8fd8 50%,#9a4fe6)' },
   { id: 'chred', g: 'Хамелеон', n: 'Червона веселка', ir: [0, .9], v: 80, d: 'хамелеон · веселкові переливи', sw: 'linear-gradient(120deg,#ff4d4d,#ffb03a 35%,#3fd67c 62%,#4a7dff)' },
   { id: 'chrob', g: 'Хамелеон', n: 'Червоно-оранжево-синій', ir: [.9, .5], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#e0364e,#ff9a3a 50%,#2f6bff)' },
-  { id: 'athermal', g: 'Спеціальні', n: 'Атермальна', c: '#9fd8d0', v: 80, d: 'прозора · захищає від УФ', sw: 'linear-gradient(135deg,#d8f4ef,#7fc2b8)' },
+  { id: 'athermal', g: 'Спеціальні', n: 'Атермальна', c: '#9fd8d0', np: 1, v: 80, d: 'прозора · захищає від УФ', sw: 'linear-gradient(135deg,#d8f4ef,#7fc2b8)' },
   { id: 'white', g: 'Спеціальні', n: 'Біла матова', c: '#e6e9ee', mat: 1, v: 50, d: 'матова · непрозора', sw: 'linear-gradient(135deg,#ffffff,#c9ced6)' },
   { id: 'none', g: 'Спеціальні', n: 'Без плівки', d: 'без плівки', sw: 'linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.03))' },
 ];
 const FILM = Object.fromEntries(FILMS.map(f => [f.id, f]));
 function filmVecs(cfg, A, B) {
   if (!cfg) { A.set(.29, .37, .44, 1); B.set(0, 0, 0, 0); return; }
+  // % керує кожною плівкою: менший % — темніше, насиченіше й щільніше; більший — світліше, блідіше й прозоріше
   const f = FILM[cfg.f], T = cfg.v / 100, t2 = T * T;
+  const mEff = !f.m ? 0 : f.m >= .9 ? f.m * (1 - .7 * Math.pow(T, 1.6)) : f.m * T; // повне дзеркало слабшає з %, легкий металевий блиск — навпаки
+  const mGain = lerp(.12, 1, Math.pow(T, .7)) * (f.mg ?? 1); // у темному шоурумі щільне дзеркало відбиває темряву
   if (f.ir) { A.set(0, 0, 0, T); B.set(0, f.ir[1], 0, f.ir[0]); return; }
-  if (f.c) { const c = new THREE.Color(f.c), k = f.m >= .9 || f.mat ? 1 : .3 + .7 * T; A.set(c.r * k, c.g * k, c.b * k, T); B.set(f.m || 0, 0, f.mat || 0, 0); return; }
-  const t = f.t || [.29, .37, .44]; A.set(t[0] * t2, t[1] * t2, t[2] * t2, T); B.set(0, 0, 0, 0);
+  if (f.mat) { const c = new THREE.Color(f.c); A.set(c.r, c.g, c.b, T); B.set(0, 0, 1, 0); return; }
+  if (f.c) {
+    const c = new THREE.Color(f.c), L = (.06 + .94 * Math.pow(T, 1.3)) * (f.np ? 1 + .3 * t2 : 1), pale = f.np ? 0 : smooth(clamp((T - .35) / .55, 0, 1)) * .5;
+    A.set(lerp(c.r * L, .29 * t2, pale), lerp(c.g * L, .37 * t2, pale), lerp(c.b * L, .44 * t2, pale), T); B.set(mEff, 0, 0, mGain); return;
+  }
+  const t = f.t || [.29, .37, .44]; A.set(t[0] * t2, t[1] * t2, t[2] * t2, T); B.set(mEff, 0, 0, f.m ? mGain : 0);
 }
 const G = { // спільні для всіх авто
   uFilmA: { value: Array.from({ length: 6 }, () => new THREE.Vector4(.29, .37, .44, 1)) }, uFilmB: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) }, uFilmP: { value: new THREE.Vector2(-1, 0) },
@@ -284,12 +291,14 @@ vec3 mir = mix(vec3(.04, .05, .065), vec3(.62, .7, .8), smoothstep(-.4, .45, rg)
 mir += vec3(.95, .98, 1.) * smoothstep(.05, 0., abs(rg - .02)) * .85;
 mir += vec3(.9, .95, 1.) * smoothstep(.16, 0., abs(fract(q.z * 5. + q.y * 3. + rw.x * 1.5) - .5)) * .3;
 float irA = step(.001, abs(fb.y));
-vec3 body = mix(fa.rgb, (.5 + .5 * cos(6.2832 * (fb.w + (1. - nv) * fb.y + vec3(0., .33, .67)))) * mix(.3, .7, vlt), irA);
+vec3 body = mix(fa.rgb, (.5 + .5 * cos(6.2832 * (fb.w + (1. - nv) * fb.y + vec3(0., .33, .67)))) * (.06 + .94 * pow(vlt, 1.3)) * .85, irA);
 body = mix(body, vec3(.29, .37, .44) * .04, strip);
-float aF = mix(mix(1.0 - t2 * .78, .96, fb.z), 1.0 - t2 * .35, fb.x);
-aF = max(aF, irA * .62);
+float aF = mix(mix(1.0 - t2 * .78, .98 - .9 * vlt, fb.z), 1.0 - t2 * .35, fb.x);
+aF = mix(aF, 1.0 - t2 * .55, irA);
 vec3 envL = outgoingLight * mix(mix(.12, .5, vlt), 0., fb.z);
-vec3 filmC = mix(body + envL, mir * fa.rgb * 1.5 + envL * .15, fb.x);
+vec3 mirT = fa.rgb / max(max(fa.r, max(fa.g, fa.b)), .002); // відтінок дзеркала
+vec3 filmC = mix(body + envL, mir * mirT * 1.1 * fb.w + envL * .15, fb.x);
+filmC *= mix(1., min(.9 / max(aF, .35), 2.2), clamp(step(.001, fb.w) + irA, 0., 1.)); // кольорові й дзеркальні: темний салон за склом не «з'їдає» яскравість
 float aOut = mix(aBase, aF, tK);
 outgoingLight = mix(outgoingLight, filmC, tK);
 float wP = uFilmP.x < -.5 ? 0. : uFilmP.x < .5 ? zW : uFilmP.x < 1.5 ? zSF * sL : uFilmP.x < 2.5 ? zSF * (1. - sL) : uFilmP.x < 3.5 ? zSR * sL : uFilmP.x < 4.5 ? zSR * (1. - sL) : zR;
@@ -666,7 +675,6 @@ async function init3D() {
   let current = null, busy = false;
   const curP = new THREE.Vector3(), curT = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
   let curFov = 30, curShift = 0, curOffY = 0, visible = true, firstFrame = true, zoomCur = 1;
-  const LIM = 1.05; // авто повертається пальцем максимум на ±60° і пружинить назад — закрутити не вийде
   new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(stageEl);
   const clock = new THREE.Timer();
   const hotEls = $$('[data-hot]');
@@ -750,12 +758,7 @@ async function init3D() {
     tmpT.lerpVectors(Pi.t, Pj.t, f);
     const heroW = 1 - clamp(c, 0, 1), tintW = clamp(c - 4, 0, 1), reqW = clamp(c - 5, 0, 1);
     // поворотний стіл + перетягування
-    state.spin += dt * .12 * heroW;
-    if (!state.dragging) {
-      state.drag += state.dragV * dt; state.dragV *= Math.pow(.01, dt);
-      const over = Math.abs(state.drag) - LIM;
-      if (over > 0) { state.dragV = 0; state.drag = Math.sign(state.drag) * (LIM + over * Math.pow(.0004, dt)); }
-    }
+    if (!state.touched) state.spin += dt * .12 * heroW; // легке погойдування лише до першого дотику
     const canDrag = heroW > .5 || tintW > .5;
     if ((!canDrag || state.dragTo0) && !state.dragging) { // повертаємо авто до вибраного вікна
       const to = Math.round(state.drag / (Math.PI * 2)) * Math.PI * 2;
@@ -915,7 +918,7 @@ async function init3D() {
   }
 
   // перетягування мишкою / пальцем
-  let lastX = 0, lastT = 0, pinch = null;
+  let lastX = 0, pinch = null;
   const pts = new Map(), zoomBtn = $('[data-zoom-x]');
   const setZoom = z => {
     state.zoom = clamp(z, 1, 2); const on = state.zoom > 1.03;
@@ -928,17 +931,15 @@ async function init3D() {
     pts.set(e.pointerId, [e.clientX, e.clientY]); stageEl.classList.add('was-touched');
     if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: state.zoom }; endDrag(); return; }
     if (pts.size > 2 || !(state.c < .5 || state.c > 4.5)) return;
-    state.dragging = true; state.dragTo0 = false; lastX = e.clientX; lastT = performance.now(); state.dragV = 0;
+    state.dragging = true; state.dragTo0 = false; state.touched = true; lastX = e.clientX; state.dragV = 0;
     try { canvas.setPointerCapture(e.pointerId); } catch (_) {} stageEl.classList.add('is-dragging');
   });
   canvas.addEventListener('pointermove', e => {
     if (pts.has(e.pointerId)) pts.set(e.pointerId, [e.clientX, e.clientY]);
     if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; setZoom(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d); return; }
     if (!state.dragging) return;
-    const now = performance.now(), dx = e.clientX - lastX;
-    const past = Math.abs(state.drag) > LIM && Math.sign(dx) === Math.sign(state.drag); // за межею — тугіше
-    state.drag = clamp(state.drag + dx * .008 * (past ? .22 : 1), -LIM * 1.25, LIM * 1.25);
-    state.dragV = clamp(dx * .008 / Math.max(.008, (now - lastT) / 1000), -2.2, 2.2); lastX = e.clientX; lastT = now;
+    // авто йде рівно за пальцем на будь-який кут і зупиняється разом із ним: без інерції
+    state.drag += (e.clientX - lastX) * Math.max(.008, 2 * Math.PI / (innerWidth * 1.1)); lastX = e.clientX;
   });
   const lift = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; endDrag(); };
   canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
@@ -1028,7 +1029,7 @@ async function main() {
   if (DEV) { // ?dev — без прелоадера, для перевірки
     loaderEl.hidden = true; lenis && lenis.start(); document.documentElement.classList.add('is-in', 'dev');
     if (E) { E.current.uScan.value.z = 0; state.intro = 1; }
-    window.__go = c => goCh(Math.round(c));
+    window.__go = c => goCh(Math.round(c)); window.__films = { FILMS, filmVecs };
   } else setTimeout(() => shatterOut(heroIn), 250);
 
   /* історія з прокруткою: 0 герой, 1 лобове, 2 бокові, 3 заднє, 4 люк, 5 тонування, 6 заявка */
