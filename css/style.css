@@ -1004,3 +1004,9 @@ body::after{content:"";position:fixed;inset:-50%;z-index:250;pointer-events:none
 /* збільшене авто не перекриває заголовок */
 .stage.is-zoomed .ch-hero{opacity:0;pointer-events:none;transition:opacity .4s}
 @media (max-width:760px){.ft-info .ft-credit{right:auto;left:50%;translate:-50% 0}}
+
+/* v9 — у розділах 01–04 по авто клікають, а не крутять */
+.has-cur .story.in-steps:not(.in-tint) .gl{cursor:crosshair}
+.pin.is-cen::before{display:none}
+.pin.is-cen span{top:-58px}
+.pin.is-cen.is-down span{top:30px}

@@ -35,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="modulepreload" href="js/vendor/three/three.module.min.js">
-<link rel="stylesheet" href="css/style.css?v=80">
+<link rel="stylesheet" href="css/style.css?v=92">
 
 <script type="application/ld+json">
 {
@@ -202,7 +202,7 @@
         <h2 class="ch-h">Тріщина зникає разом зі старим склом</h2>
         <p>З датчиками дощу, підігрівом, камерою. Знімаємо старе, чистимо рамку від корозії, вклеюємо нове. Машину можна забрати за 3–4 години.</p>
         <p class="ch-price">Робота — від 1000 грн</p>
-        <button type="button" class="ch-mark" data-mark="1">Позначити скол на лобовому<i aria-hidden="true">→</i></button>
+        <button type="button" class="ch-mark" data-mark="1">Позначити лобове скло<i aria-hidden="true">→</i></button>
       </article>
       <article class="ch ch-l" data-ch="2">
         <p class="ch-n"><span class="mono">02</span><span>Бокові скла</span></p>
@@ -230,19 +230,19 @@
       <article class="ch ch-r ch-tint" data-ch="5">
         <p class="ch-n"><span class="mono">05</span><span>Тонування · <span data-car-name>Jeep Wrangler</span></span></p>
         <div class="tv">
-          <div class="tv-read"><output id="tint-out" for="tint" data-tint-out>15%</output><span data-tint-word>дуже темна</span></div>
+          <div class="tv-read"><output id="tint-out" for="tint" data-tint-out>35%</output><span data-tint-word>середня</span></div>
           <label class="tv-l" for="tint">Світлопропускання плівки</label>
         </div>
-        <div class="tr" style="--v:12.5%">
-          <input id="tint" type="range" min="5" max="85" step="1" value="15" data-tint aria-describedby="tint-law">
+        <div class="tr" style="--v:37.5%">
+          <input id="tint" type="range" min="5" max="85" step="1" value="35" data-tint aria-describedby="tint-law">
           <div class="tr-ticks" aria-hidden="true"><span style="--t:0">5</span><span style="--t:12.5">15</span><span style="--t:18.75">20</span><span style="--t:37.5">35</span><span style="--t:56.25">50</span><span style="--t:81.25">70</span></div>
         </div>
         <fieldset class="tw">
           <legend class="vh">Які скла тонувати</legend>
           <div class="seg">
-            <label><input type="radio" name="tint-front" value="none" checked><span>Лише задні</span></label>
+            <label><input type="radio" name="tint-front" value="none"><span>Лише задні</span></label>
             <label><input type="radio" name="tint-front" value="70"><span>+ передні 70%</span></label>
-            <label><input type="radio" name="tint-front" value="same"><span>Усі однаково</span></label>
+            <label><input type="radio" name="tint-front" value="same" checked><span>Усі однаково</span></label>
           </div>
         </fieldset>
         <label class="sw"><input type="checkbox" id="tint-strip"><span class="sw-t" aria-hidden="true"></span>Смуга зверху лобового</label>
@@ -272,8 +272,8 @@
           <fieldset class="dmg">
             <legend>Що сталося</legend>
             <div class="seg seg-v">
-              <label><input type="radio" name="dmg" value="chip" checked><span>Скол</span></label>
-              <label><input type="radio" name="dmg" value="crack"><span>Тріщина</span></label>
+              <label><input type="radio" name="dmg" value="chip"><span>Скол</span></label>
+              <label><input type="radio" name="dmg" value="crack" checked><span>Тріщина</span></label>
               <label><input type="radio" name="dmg" value="broken"><span>Розбите</span></label>
             </div>
           </fieldset>
@@ -298,7 +298,7 @@
         <p class="credit3d">3D-модель: <span data-credit>—</span></p>
       </details>
       <button type="button" class="zoom-x" data-zoom-x hidden aria-label="Повернути звичайний розмір"><b>2×</b><span aria-hidden="true">✕</span></button>
-      <p class="gl-hint" aria-hidden="true"><span class="gh-touch">Крутіть пальцем · два пальці — збільшити</span><span class="gh-mouse">Тягніть, щоб повернути · подвійний клік — збільшити</span></p>
+      <p class="gl-hint" aria-hidden="true"><span class="gh-touch">Торкніться вікна — тріщина · два пальці — зум</span><span class="gh-mouse">Клік по вікну — тріщина · тягніть — поворот · подвійний клік — зум</span></p>
     </div>
   </div>
 </section>
@@ -694,6 +694,6 @@
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/vendor/lenis.min.js" defer></script>
-<script type="module" src="js/app.js?v=80"></script>
+<script type="module" src="js/app.js?v=92"></script>
 </body>
 </html>

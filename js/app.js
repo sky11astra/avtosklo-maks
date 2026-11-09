@@ -1,4 +1,4 @@
-/* Автоскло-Макс v8 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v9 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -237,10 +237,11 @@ vlt = mix(vlt, uTint.x, zSF);
 vlt = mix(vlt, uTint.y, zSR);
 vlt = mix(vlt, uTint.z, zR);
 vlt = mix(vlt, .2, strip);
-float dark = uTintOn * (1.0 - vlt);
 float aBase = mix(.2, mix(.32, .48, clamp(zSF + zSR + zR + zT, 0., 1.)), zWin);
-float aOut = mix(aBase, .975, dark);
-outgoingLight *= 1.0 - dark * .93;
+float tK = uTintOn * clamp(zW + zSF + zSR + zR, 0., 1.); // у розділі «Тонування» скло живе від повзунка
+float aOut = mix(aBase, 1.0 - vlt * .52, tK);
+vec3 filmC = vec3(.29, .37, .44) * pow(vlt, 1.7) + outgoingLight * mix(.12, .5, vlt); // світлість не залежить від кольору салону
+outgoingLight = mix(outgoingLight, filmC, tK);
 float film = clamp(zSF * step(uTint.x, .99) + zSR * step(uTint.y, .99) + zR * step(uTint.z, .99) + strip, 0., 1.) * uTintOn;
 float shine = film * smoothstep(.07, 0., abs((1.0 - q.z) - uShine));
 outgoingLight += vec3(.75, .93, 1.) * shine * .9; aOut = max(aOut, shine * .8);
@@ -583,7 +584,7 @@ async function init3D() {
       { t: v(0, side.y * .92, side.z), dir: v(1, .1, .02).normalize(), r: L * .5, fov: 30 },
       { t: A[4].clone(), dir: v(-.4, .42, -.8).normalize(), r: Math.max(W, H) * .92, fov: 28 },
       { t: A[5].clone(), dir: v(.36, 1.5, .55).normalize(), r: Math.max(W, L * .5) * .95, fov: 30 },
-      { t: v(0, H * .45, -L * .06), dir: v(.72, .2, -.62).normalize(), r: R * .98, mob: 1.08, fov: 30 },
+      { t: v(0, H * .45, -L * .06), dir: v(.72, .2, -.62).normalize(), r: R * .98, mob: .86, fov: 30 },
       { t: v(0, H * .48, L * .04), dir: v(.66, .34, .67).normalize(), r: R * 1.02, mob: 1.12, fov: 30 },
     ];
   }
@@ -615,7 +616,7 @@ async function init3D() {
   const clock = new THREE.Timer();
   const hotEls = $$('[data-hot]');
   const sideOf = [0, 1, -1, 1, -1, 1, -1];
-  const pinEl = $('[data-pin]');
+  const pinEl = $('[data-pin]'), pinLabel = $('[data-pin-t]');
 
   function framePos(pr, out) {
     const vf = THREE.MathUtils.degToRad(pr.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
@@ -718,7 +719,7 @@ async function init3D() {
     if (Math.abs(camera.fov - curFov) > .01) { camera.fov = curFov; camera.updateProjectionMatrix(); }
     const mob = isMobile();
     const targetShift = mob ? 0 : lerp(sideOf[i], sideOf[j], f) * -.2 * (c > .5 ? 1 : c * 2);
-    const targetOffY = mob ? (c < .5 ? (band ?? .1) : c > 5.5 ? .25 : c > 4.5 ? .2 : .18) : (c < .5 ? .15 : .02);
+    const targetOffY = mob ? (c < .5 ? (band ?? .1) : c > 5.5 ? .14 : c > 4.5 ? .2 : .18) : (c < .5 ? .15 : .02);
     curShift = lerp(curShift, targetShift, k); curOffY = lerp(curOffY, targetOffY, k);
     const w = renderer.domElement.width, h = renderer.domElement.height;
     camera.setViewOffset(w, h, -curShift * w, curOffY * h, w, h);
@@ -785,7 +786,11 @@ async function init3D() {
     if (!on) return;
     tmpA.set(G.uChipP.value.x, G.uChipP.value.y, G.uChipP.value.z).applyMatrix4(current.group.matrixWorld).project(camera);
     const w = stageEl.clientWidth, h = stageEl.clientHeight;
-    pinEl.style.transform = `translate3d(${((tmpA.x + 1) / 2 * w).toFixed(1)}px, ${((1 - tmpA.y) / 2 * h).toFixed(1)}px, 0)`;
+    const px = (tmpA.x + 1) / 2 * w, py = (1 - tmpA.y) / 2 * h, narrow = isMobile();
+    pinEl.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+    // на телефоні підпис стоїть над точкою (або під нею) і не вилазить за край екрана
+    pinEl.classList.toggle('is-cen', narrow); pinEl.classList.toggle('is-down', narrow && py < 250);
+    if (pinLabel) pinLabel.style.left = narrow ? (clamp(px - pinLabel.offsetWidth / 2, 8, w - pinLabel.offsetWidth - 8) - px).toFixed(1) + 'px' : '';
   }
 
   /* вибір вікна: підсвітка, політ камери й скол у точці удару */
@@ -903,13 +908,13 @@ async function main() {
   const carBtns = $$('[data-car]');
   const credits = $$('[data-credit]');
   const carName = $$('[data-car-name]');
-  const tintCfg = { rear: 15, front: 'none', strip: false };
+  const tintCfg = { rear: 35, front: 'same', strip: false };
   let userCar = ''; // модель, яку людина знайшла в пошуку гаража
   const carLabel = () => userCar || CARS[activeCar].name;
   const WIN = { 1: 'Лобове скло', 4: 'Заднє скло', 5: 'Люк' };
   const winName = (z, sd) => z === 2 ? `Бокове переднє ${sd > 0 ? 'ліве' : 'праве'}` : z === 3 ? `Бокове заднє ${sd > 0 ? 'ліве' : 'праве'}` : WIN[z];
   const DMG = { chip: 'скол', crack: 'тріщина', broken: 'розбите' };
-  let sel = null, dmg = 'chip';
+  let sel = null, dmg = 'crack';
   const dlg = $('[data-req]'), form = $('[data-req-form]'), reqCar = $('[data-req-car]');
 
   function paintCarUI(keyName) {
@@ -975,7 +980,7 @@ async function main() {
     story.classList.toggle('in-steps', idx > 0);
     story.classList.toggle('in-tint', idx === 5);
     story.classList.toggle('in-req', idx === 6);
-    canvas.dataset.cursor = idx === 6 ? 'pick' : 'drag'; dispatchEvent(new Event('am:ch'));
+    canvas.dataset.cursor = idx === 0 || idx === 5 ? 'drag' : 'pick'; dispatchEvent(new Event('am:ch'));
     if (idx > 0 && idx < 5) gar.close();
     const nav = $('.ch-nav', story), on = navBtns.find(b => +b.dataset.go === idx);
     if (nav && on && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: on.offsetLeft - nav.clientWidth / 2 + on.offsetWidth / 2, behavior: reduce ? 'auto' : 'smooth' });
@@ -1080,7 +1085,7 @@ async function main() {
   canvas.addEventListener('pointerup', e => {
     if (!tap || !E) return;
     const far = Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 7 || performance.now() - tap.t > 600; tap = null;
-    if (far || !(state.c < .5 || state.c > 5.5)) return;
+    if (far) return;
     const hit = E.pick(e.clientX, e.clientY); if (!hit) return;
     setSel(hit);
     if (state.c < 5.5) goCh(6);
@@ -1124,6 +1129,7 @@ async function main() {
   function applyTint(flash) {
     const r = tintCfg.rear / 100, fr = tintCfg.front === 'none' ? 1 : tintCfg.front === '70' ? .7 : r;
     state.tintTarget.set(fr, r, r, tintCfg.strip ? 1 : 0);
+    if (tintIn) { const tr = tintIn.closest('.tr'); if (tr) tr.style.setProperty('--v', ((tintCfg.rear - 5) / .8).toFixed(1) + '%'); }
     if (tintOut) tintOut.textContent = tintCfg.rear + '%';
     if (tintWord) tintWord.textContent = tintWordOf(tintCfg.rear);
     const bad = fr < .7;
@@ -1423,14 +1429,12 @@ function cursor() {
   const upd = target => {
     const t = target && target.closest && target.closest('[data-cursor], a, button, label, input, summary, [data-lb]');
     const txt = t && t.dataset.cursor;
-    // у розділах 01–04 авто не крутиться — там звичайний курсор
-    const still = t && t.matches('[data-gl]') && document.querySelector('.story.in-steps:not(.in-tint):not(.in-req)');
-    const m = !still && (txt === 'drag' || txt === 'pick') ? txt : '';
+    const m = txt === 'drag' || txt === 'pick' ? txt : '';
     el.classList.toggle('is-drag', m === 'drag');
     el.classList.toggle('is-pick', m === 'pick');
-    el.classList.toggle('is-label', !!txt && !m && !still);
+    el.classList.toggle('is-label', !!txt && !m);
     el.classList.toggle('is-hover', !!t && !txt);
-    label.textContent = m === 'pick' ? 'Оберіть скло' : txt && !m && !still ? txt : '';
+    label.textContent = m === 'pick' ? 'Торкніться вікна' : txt && !m ? txt : '';
   };
   document.addEventListener('pointerover', e => upd(last = e.target));
   addEventListener('am:ch', () => upd(last)); // розділ змінився прокруткою — курсор під мишею теж
