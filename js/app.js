@@ -1,4 +1,4 @@
-/* Автоскло-Макс v10 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v11 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -148,7 +148,44 @@ function shatterOut(onBreak) {
 }
 
 /* ---------- шейдери ---------- */
+/* Каталог плівок. Порядок вікон у SLOTS = порядок елементів масивів uFilmA/uFilmB у шейдері.
+   t — відтінок нейтральної плівки; c — колір; m — дзеркальність; ir — хамелеон [базовий тон, розмах]; mat — матова; v — типовий %. */
+const SLOTS = ['ws', 'fl', 'fr', 'rl', 'rr', 'rw'], WINS_MAIN = ['fl', 'fr', 'rl', 'rr', 'rw'];
+const WIN_NAMES = { ws: 'лобове', fl: 'переднє ліве', fr: 'переднє праве', rl: 'заднє бокове ліве', rr: 'заднє бокове праве', rw: 'заднє скло' };
+const mirSw = (a, b, c, d) => `linear-gradient(135deg,${a},${b} 42%,${c} 56%,${d})`;
+const FILMS = [
+  { id: 'black', g: 'Тонувальні', n: 'Чорна', sw: 'linear-gradient(135deg,#343b44,#0a0c10)' },
+  { id: 'carbon', g: 'Тонувальні', n: 'Вуглецева', t: [.28, .31, .34], sw: 'linear-gradient(135deg,#3a3d40,#101214)' },
+  { id: 'ceramic', g: 'Тонувальні', n: 'Керамічна', t: [.24, .36, .48], sw: 'linear-gradient(135deg,#3b4f64,#0c1219)' },
+  { id: 'dyed', g: 'Тонувальні', n: 'Фарбована', t: [.34, .29, .4], sw: 'linear-gradient(135deg,#453c50,#110e16)' },
+  { id: 'metal', g: 'Тонувальні', n: 'Металізована', c: '#59626b', m: .35, sw: mirSw('#79828c', '#3b424a', '#8a939d', '#23282e') },
+  { id: 'bronze', g: 'Кольорові', n: 'Бронзова', c: '#8a5a2b', d: 'кольорова · теплий відтінок', sw: 'linear-gradient(135deg,#a2703c,#4a2e14)' },
+  { id: 'blue', g: 'Кольорові', n: 'Синя', c: '#1f5fd0', d: 'кольорова · синій відтінок', sw: 'linear-gradient(135deg,#3f82ee,#123b86)' },
+  { id: 'silver', g: 'Дзеркальні', n: 'Срібне дзеркало', c: '#cfd6de', m: 1, v: 15, d: 'дзеркальна · салон не видно', sw: mirSw('#f5f8fb', '#8d97a3', '#e9eef3', '#5b6571') },
+  { id: 'gold', g: 'Дзеркальні', n: 'Золоте дзеркало', c: '#e0a93a', m: 1, v: 15, d: 'дзеркальна · золотий блиск', sw: mirSw('#ffe9a8', '#b9832a', '#ffd877', '#7a5213') },
+  { id: 'mbronze', g: 'Дзеркальні', n: 'Бронзове дзеркало', c: '#a8703a', m: 1, v: 15, d: 'дзеркальна · бронзовий блиск', sw: mirSw('#e3b98c', '#7f5128', '#d29c66', '#4c2e14') },
+  { id: 'sky', g: 'Дзеркальні', n: 'Блакитне дзеркало', c: '#6fb3ff', m: 1, v: 15, d: 'дзеркальна · блакитний блиск', sw: mirSw('#d4e9ff', '#4a87cc', '#a9d2ff', '#27548a') },
+  { id: 'navy', g: 'Дзеркальні', n: 'Темно-синє дзеркало', c: '#2a4fb0', m: 1, v: 15, d: 'дзеркальна · темно-синя', sw: mirSw('#7b98e0', '#1d3a85', '#5b7cd0', '#0f2150') },
+  { id: 'mgreen', g: 'Дзеркальні', n: 'Зелене дзеркало', c: '#3f9e62', m: 1, v: 15, d: 'дзеркальна · зелений блиск', sw: mirSw('#a6e0bb', '#2c7748', '#7cc99a', '#17472a') },
+  { id: 'mblack', g: 'Дзеркальні', n: 'Чорне дзеркало', c: '#4a4f57', m: 1, v: 5, d: 'дзеркальна · майже чорна', sw: mirSw('#8d939c', '#25292f', '#6d737c', '#0e1013') },
+  { id: 'chblue', g: 'Хамелеон', n: 'Синьо-фіолетовий', ir: [.36, -.25], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#2b6bff,#6a44ff 55%,#c04fe0)' },
+  { id: 'chgreen', g: 'Хамелеон', n: 'Зелено-фіолетовий', ir: [.67, -.5], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#2fd07a,#2d8fd8 50%,#9a4fe6)' },
+  { id: 'chred', g: 'Хамелеон', n: 'Червона веселка', ir: [0, .9], v: 80, d: 'хамелеон · веселкові переливи', sw: 'linear-gradient(120deg,#ff4d4d,#ffb03a 35%,#3fd67c 62%,#4a7dff)' },
+  { id: 'chrob', g: 'Хамелеон', n: 'Червоно-оранжево-синій', ir: [.9, .5], v: 80, d: 'хамелеон · колір змінюється під кутом', sw: 'linear-gradient(120deg,#e0364e,#ff9a3a 50%,#2f6bff)' },
+  { id: 'athermal', g: 'Спеціальні', n: 'Атермальна', c: '#9fd8d0', v: 80, d: 'прозора · захищає від УФ', sw: 'linear-gradient(135deg,#d8f4ef,#7fc2b8)' },
+  { id: 'white', g: 'Спеціальні', n: 'Біла матова', c: '#e6e9ee', mat: 1, v: 50, d: 'матова · непрозора', sw: 'linear-gradient(135deg,#ffffff,#c9ced6)' },
+  { id: 'none', g: 'Спеціальні', n: 'Без плівки', d: 'без плівки', sw: 'linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.03))' },
+];
+const FILM = Object.fromEntries(FILMS.map(f => [f.id, f]));
+function filmVecs(cfg, A, B) {
+  if (!cfg) { A.set(.29, .37, .44, 1); B.set(0, 0, 0, 0); return; }
+  const f = FILM[cfg.f], T = cfg.v / 100, t2 = T * T;
+  if (f.ir) { A.set(0, 0, 0, T); B.set(0, f.ir[1], 0, f.ir[0]); return; }
+  if (f.c) { const c = new THREE.Color(f.c), k = f.m >= .9 || f.mat ? 1 : .3 + .7 * T; A.set(c.r * k, c.g * k, c.b * k, T); B.set(f.m || 0, 0, f.mat || 0, 0); return; }
+  const t = f.t || [.29, .37, .44]; A.set(t[0] * t2, t[1] * t2, t[2] * t2, T); B.set(0, 0, 0, 0);
+}
 const G = { // спільні для всіх авто
+  uFilmA: { value: Array.from({ length: 6 }, () => new THREE.Vector4(.29, .37, .44, 1)) }, uFilmB: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) }, uFilmP: { value: new THREE.Vector2(-1, 0) },
   uTime: { value: 0 }, uGlow: { value: new THREE.Vector4() }, uTint: { value: new THREE.Vector4(1, .15, .15, 0) }, uTintOn: { value: 0 },
   uShine: { value: -1 }, uCrack: { value: null }, uCrackOn: { value: 0 }, uHeal: { value: 0 },
   // вибране вікно: x — зона, y — бік (1 лівий, -1 правий, 0 — без боку), z — сила підсвітки
@@ -193,6 +230,7 @@ float chipPat(vec3 lp) {
 const GLASS_HEAD = `
 varying float vZone;
 uniform mat4 uInv; uniform vec3 uMin; uniform vec3 uMax; uniform vec4 uWs;
+uniform vec4 uFilmA[6]; uniform vec4 uFilmB[6]; uniform vec2 uFilmP; uniform float uWinC;
 uniform vec4 uGlow; uniform vec4 uTint; uniform float uTintOn; uniform float uShine; uniform float uTime;
 uniform sampler2D uCrack; uniform float uCrackOn; uniform float uHeal;
 float zoneIs(float z) { return 1.0 - step(.5, abs(vZone - z)); }
@@ -232,18 +270,31 @@ vec3 lp = (uInv * vec4(vScanW, 1.0)).xyz; lp.y = abs(lp.y);
 vec3 q = (lp - uMin) / (uMax - uMin);
 vec2 wsuv = vec2((q.x - uWs.x) / (uWs.y - uWs.x), (q.y - uWs.z) / (uWs.w - uWs.z));
 float strip = zW * smoothstep(.8, .82, wsuv.y) * uTint.w;
-float vlt = 1.0;
-vlt = mix(vlt, uTint.x, zSF);
-vlt = mix(vlt, uTint.y, zSR);
-vlt = mix(vlt, uTint.z, zR);
-vlt = mix(vlt, .2, strip);
 float aBase = mix(.2, mix(.32, .48, clamp(zSF + zSR + zR + zT, 0., 1.)), zWin);
-float tK = uTintOn * clamp(zW + zSF + zSR + zR, 0., 1.); // у розділі «Тонування» скло живе від повзунка
-float t2 = vlt * vlt; // світло проходить плівку двічі: у салон і назад до очей
-float aOut = mix(aBase, 1.0 - t2 * .78, tK);
-vec3 filmC = vec3(.29, .37, .44) * t2 + outgoingLight * mix(.12, .5, vlt); // світлість не залежить від кольору салону
+float sL = step(0., lp.x); // +x — ліва (водійська) сторона
+vec4 fa = uFilmA[0] * zW + (uFilmA[1] * sL + uFilmA[2] * (1. - sL)) * zSF + (uFilmA[3] * sL + uFilmA[4] * (1. - sL)) * zSR + uFilmA[5] * zR;
+vec4 fb = uFilmB[0] * zW + (uFilmB[1] * sL + uFilmB[2] * (1. - sL)) * zSF + (uFilmB[3] * sL + uFilmB[4] * (1. - sL)) * zSR + uFilmB[5] * zR;
+float zF = clamp(zW + zSF + zSR + zR, 0., 1.), tK = uTintOn * zF;
+float vlt = mix(fa.a, .2, strip), t2 = vlt * vlt; // світло проходить плівку двічі: у салон і назад до очей
+vec3 nVw = normalize(vViewPosition);
+float nv = abs(dot(nVw, normal));
+vec3 rw = inverseTransformDirection(reflect(-nVw, normal), viewMatrix); // куди дивиться відбиття: небо, горизонт, земля
+float rg = rw.y * 1.2 + (q.y - uWinC) * 3.4; // у дзеркалі: знизу темна земля, згори світле небо, між ними яскрава лінія горизонту
+vec3 mir = mix(vec3(.04, .05, .065), vec3(.62, .7, .8), smoothstep(-.4, .45, rg));
+mir += vec3(.95, .98, 1.) * smoothstep(.05, 0., abs(rg - .02)) * .85;
+mir += vec3(.9, .95, 1.) * smoothstep(.16, 0., abs(fract(q.z * 5. + q.y * 3. + rw.x * 1.5) - .5)) * .3;
+float irA = step(.001, abs(fb.y));
+vec3 body = mix(fa.rgb, (.5 + .5 * cos(6.2832 * (fb.w + (1. - nv) * fb.y + vec3(0., .33, .67)))) * mix(.3, .7, vlt), irA);
+body = mix(body, vec3(.29, .37, .44) * .04, strip);
+float aF = mix(mix(1.0 - t2 * .78, .96, fb.z), 1.0 - t2 * .35, fb.x);
+aF = max(aF, irA * .62);
+vec3 envL = outgoingLight * mix(mix(.12, .5, vlt), 0., fb.z);
+vec3 filmC = mix(body + envL, mir * fa.rgb * 1.5 + envL * .15, fb.x);
+float aOut = mix(aBase, aF, tK);
 outgoingLight = mix(outgoingLight, filmC, tK);
-float film = clamp(zSF * step(uTint.x, .99) + zSR * step(uTint.y, .99) + zR * step(uTint.z, .99) + strip, 0., 1.) * uTintOn;
+float wP = uFilmP.x < -.5 ? 0. : uFilmP.x < .5 ? zW : uFilmP.x < 1.5 ? zSF * sL : uFilmP.x < 2.5 ? zSF * (1. - sL) : uFilmP.x < 3.5 ? zSR * sL : uFilmP.x < 4.5 ? zSR * (1. - sL) : zR;
+outgoingLight += vec3(.55, .9, 1.) * wP * uFilmP.y * uTintOn * .55; aOut = max(aOut, wP * uFilmP.y * uTintOn * .5); // коротке блимання вибраного вікна
+float film = clamp(zF * step(fa.a, .99) + strip, 0., 1.) * uTintOn;
 float shine = film * smoothstep(.07, 0., abs((1.0 - q.z) - uShine));
 outgoingLight += vec3(.75, .93, 1.) * shine * .9; aOut = max(aOut, shine * .8);
 float glow = clamp(uGlow.x * zW + uGlow.y * (zSF + zSR) + uGlow.z * zR + uGlow.w * zT, 0., 1.);
@@ -526,7 +577,7 @@ async function init3D() {
     const car = {
       key: keyName, cfg, group, model, box, size,
       uScan: { value: new THREE.Vector4(0, 0, 1, 0) },
-      U: { uInv: { value: new THREE.Matrix4() }, uMin: { value: box.min.clone() }, uMax: { value: box.max.clone() }, uWs: { value: new THREE.Vector4(.1, .9, .5, .85) } },
+      U: { uWinC: { value: .75 }, uInv: { value: new THREE.Matrix4() }, uMin: { value: box.min.clone() }, uMax: { value: box.max.clone() }, uWs: { value: new THREE.Vector4(.1, .9, .5, .85) } },
       uRoof: { value: new THREE.Vector4(0, 0, 0, 99) }, uRoofOn: { value: 0 },
     };
     const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x0b1320, metalness: 0, roughness: .02, transparent: true, opacity: .45, envMapIntensity: 1.8, clearcoat: 1, clearcoatRoughness: .02, side: THREE.DoubleSide, depthWrite: false });
@@ -559,6 +610,7 @@ async function init3D() {
     classifyGlass(car, glassMeshes);
     car.U.uInv.value.copy(group.matrixWorld).invert();
     car.glassMeshes = glassMeshes;
+    car.U.uWinC.value = (car.anchors[2].y + car.anchors[3].y) / 2 / size.y;
     car.hasRoofGlass = car.zoneArea[5] > size.x * size.z * .06;
     makeSunroof(car);
     if (!mobile) {
@@ -579,7 +631,7 @@ async function init3D() {
     const R = .5 * Math.hypot(L, H, W);
     const v = (x, y, z) => new THREE.Vector3(x, y, z);
     const side = A[2].clone().add(A[3]).multiplyScalar(.5);
-    return [
+    const P = [
       { t: v(0, H * .42, 0), dir: v(.62, .26, .74).normalize(), r: R * 1.07, mob: .86, fov: 30 },
       { t: A[1].clone(), dir: v(.2, .5, .85).normalize(), r: Math.max(W, H) * .85, fov: 28 },
       { t: v(0, side.y * .92, side.z), dir: v(1, .1, .02).normalize(), r: L * .5, fov: 30 },
@@ -588,6 +640,8 @@ async function init3D() {
       { t: v(0, H * .45, -L * .06), dir: v(.72, .2, -.62).normalize(), r: R * .98, mob: .86, fov: 30 },
       { t: v(0, H * .48, L * .04), dir: v(.66, .34, .67).normalize(), r: R * 1.02, mob: 1.12, fov: 30 },
     ];
+    car.tintPres = { r: { ...P[5], dir: v(-.72, .2, -.62).normalize() }, f: { ...P[5], t: v(0, H * .5, L * .08), dir: v(.42, .3, .86).normalize(), r: R * 1.02 } }; // камера під праві вікна й лобове
+    return P;
   }
 
   const ro = new ResizeObserver(() => resize()); ro.observe(stageEl);
@@ -690,7 +744,8 @@ async function init3D() {
     G.uTime.value = t;
     const P = current.presets;
     const c = clamp(state.c, 0, P.length - 1), i = Math.floor(c), f = smooth(c - i), j = Math.min(i + 1, P.length - 1);
-    const Pi = i === 6 && current.selPre ? current.selPre : P[i], Pj = j === 6 && current.selPre ? current.selPre : P[j];
+    const tv = state.tintView && current.tintPres ? current.tintPres[state.tintView] : null;
+    const Pi = i === 6 && current.selPre ? current.selPre : i === 5 && tv ? tv : P[i], Pj = j === 6 && current.selPre ? current.selPre : j === 5 && tv ? tv : P[j];
     framePos(Pi, tmpA); framePos(Pj, tmpB); tmpP.lerpVectors(tmpA, tmpB, f);
     tmpT.lerpVectors(Pi.t, Pj.t, f);
     const heroW = 1 - clamp(c, 0, 1), tintW = clamp(c - 4, 0, 1), reqW = clamp(c - 5, 0, 1);
@@ -741,6 +796,7 @@ async function init3D() {
     // тонування
     G.uTintOn.value = lerp(G.uTintOn.value, c > 4.4 && c < 5.6 ? 1 : 0, 1 - Math.pow(.05, dt));
     const tt = state.tintTarget; if (tt) G.uTint.value.lerp(tt, 1 - Math.pow(.004, dt));
+    if (state.filmA) { const kf = 1 - Math.pow(.004, dt); for (let n = 0; n < 6; n++) { G.uFilmA.value[n].lerp(state.filmA[n], kf); G.uFilmB.value[n].lerp(state.filmB[n], kf); } }
     current.U.uInv.value.copy(current.group.matrixWorld).invert();
     rimC.intensity = 40 + Math.sin(t * .8) * 8;
     scene.environmentRotation.y = t * .05;
@@ -910,7 +966,9 @@ async function main() {
   const carBtns = $$('[data-car]');
   const credits = $$('[data-credit]');
   const carName = $$('[data-car-name]');
-  const tintCfg = { rear: 35, front: 'same', strip: false };
+  // за замовчуванням усі вікна однакові; галочка вмикає свою плівку на кожне вікно
+  const tintWins = { ws: null, fl: { f: 'black', v: 35 }, fr: { f: 'black', v: 35 }, rl: { f: 'black', v: 35 }, rr: { f: 'black', v: 35 }, rw: { f: 'black', v: 35 } };
+  const tintCfg = { multi: false, target: 'fl', strip: false };
   let userCar = ''; // модель, яку людина знайшла в пошуку гаража
   const carLabel = () => userCar || CARS[activeCar].name;
   const WIN = { 1: 'Лобове скло', 4: 'Заднє скло', 5: 'Люк' };
@@ -1087,7 +1145,14 @@ async function main() {
   canvas.addEventListener('pointerup', e => {
     if (!tap || !E) return;
     const far = Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 7 || performance.now() - tap.t > 600; tap = null;
-    if (far || state.chapter === 5) return; // у «Тонуванні» дотик не робить тріщин
+    if (far) return;
+    if (state.chapter === 5) { // у «Тонуванні» дотик не робить тріщин: із галочкою він лише обирає вікно
+      if (!tintCfg.multi) return;
+      const h = E.pick(e.clientX, e.clientY); if (!h) return;
+      const k = h.zone === 1 ? 'ws' : h.zone === 2 ? (h.side > 0 ? 'fl' : 'fr') : h.zone === 3 ? (h.side > 0 ? 'rl' : 'rr') : h.zone === 4 ? 'rw' : null;
+      if (k) pickTintWin(k);
+      return;
+    }
     const hit = E.pick(e.clientX, e.clientY); if (!hit) return;
     setSel(hit);
     if (state.c < 5.5) goCh(6);
@@ -1125,39 +1190,89 @@ async function main() {
   }
 
   /* тонування */
-  state.tintTarget = new THREE.Vector4();
+  state.tintTarget = new THREE.Vector4(); // .w — смуга на лобовому
+  state.filmA = Array.from({ length: 6 }, () => new THREE.Vector4());
+  state.filmB = Array.from({ length: 6 }, () => new THREE.Vector4());
   const law = $('[data-tint-law]'), tintIn = $('[data-tint]'), tintOut = $('[data-tint-out]'), tintWord = $('[data-tint-word]');
   // стандартний ринковий ряд плівок: % світлопропускання (VLT) і як це виглядає
   const TINT = [[5, 'лімузин · салон не видно'], [15, 'дуже темна · салон майже не видно'], [20, 'темна · салон видно лише впритул'], [35, 'середня · салон видно нечітко'], [50, 'світла · легке затемнення'], [70, 'майже прозора'], [80, 'прозора · як заводське скло']];
-  const tintStops = $$('[data-tint-stop]');
+  const tintStops = $$('[data-tint-stop]'), tintCard = $('.ch-tint'), filmOpen = $('[data-film-open]'), filmPanel = $('[data-film-panel]'), winRow = $('[data-win-row]'), winBtns = $$('[data-win-t]'), filmSw = $('[data-film-sw]'), filmName = $('[data-film-name]');
+  const curKey = () => tintCfg.multi ? tintCfg.target : 'fl';
+  const targetKeys = () => tintCfg.multi ? [tintCfg.target] : WINS_MAIN;
   function applyTint(flash) {
-    const r = tintCfg.rear / 100, fr = tintCfg.front === 'none' ? 1 : tintCfg.front === '70' ? .7 : r;
-    state.tintTarget.set(fr, r, r, tintCfg.strip ? 1 : 0);
-    const stop = TINT.findIndex(t => t[0] === tintCfg.rear);
+    SLOTS.forEach((k, i) => filmVecs(tintWins[k], state.filmA[i], state.filmB[i]));
+    state.tintTarget.set(1, 1, 1, tintCfg.strip ? 1 : 0);
+    const c = tintWins[curKey()], f = c ? FILM[c.f] : FILM.none, stop = c ? TINT.findIndex(t => t[0] === c.v) : -1;
     tintStops.forEach((b, i) => b.setAttribute('aria-pressed', i === stop));
-    if (tintIn) { tintIn.value = stop; tintIn.setAttribute('aria-valuetext', `${tintCfg.rear}%, ${TINT[stop][1]}`); }
-    if (tintOut) tintOut.textContent = tintCfg.rear + '%';
-    if (tintWord) tintWord.textContent = TINT[stop][1];
-    const bad = fr < .7;
+    if (tintIn && stop >= 0) { tintIn.value = stop; tintIn.setAttribute('aria-valuetext', `${c.v}%, ${TINT[stop][1]}`); }
+    if (tintOut) tintOut.textContent = c ? c.v + '%' : '—';
+    if (tintWord) tintWord.textContent = c ? (f.d || TINT[stop][1]) : 'без плівки';
+    if (filmSw) filmSw.style.background = f.sw;
+    if (filmName) filmName.textContent = f.n;
+    $$('[data-film]', filmPanel).forEach(b => b.setAttribute('aria-pressed', b.dataset.film === f.id));
+    const tgt = $('[data-film-target]', filmPanel); if (tgt) tgt.textContent = tintCfg.multi ? WIN_NAMES[tintCfg.target] : 'усі вікна';
+    winBtns.forEach(b => { const k = b.dataset.winT, w = tintWins[k]; b.setAttribute('aria-pressed', tintCfg.multi && k === tintCfg.target); const d = $('i', b); if (d) d.style.background = (w ? FILM[w.f] : FILM.none).sw; });
+    const all = SLOTS.map(k => tintWins[k]).filter(Boolean), front = [tintWins.fl, tintWins.fr].filter(Boolean);
+    const mirror = all.some(w => FILM[w.f].m >= .9), frontDark = front.some(w => w.v < 70), frontMin = front.length ? Math.min(...front.map(w => w.v)) : 0;
     // норма стосується скла разом із плівкою: відсотки множаться, тож плівка 70% на заводському склі дає менше 70%
-    const filmFront = !bad && fr < 1;
-    if (law) { law.textContent = bad ? `Передні бокові темніші за норму 70%. Таку плівку ставимо лише на задні.` : filmFront ? `Зі склом вийде темніше за ${Math.round(fr * 100)}%, а норма для передніх — 70%. Майстер заміряє приладом.` : 'Відповідає ПДР: передні бокові без плівки, задні — будь-які.'; law.classList.toggle('warn', bad || filmFront); }
+    const msg = mirror ? 'Дзеркальні плівки на дорогах України заборонені. Тут можна лише приміряти.'
+      : tintWins.ws ? 'Лобове: норма — від 75% разом зі склом, плівка майже завжди її порушує.'
+      : frontDark ? 'Передні бокові темніші за норму 70%. Таку плівку ставимо лише на задні.'
+      : front.length ? `Зі склом вийде темніше за ${frontMin}%, а норма для передніх — 70%. Майстер заміряє приладом.`
+      : 'Відповідає ПДР: передні бокові без плівки, задні — будь-які.';
+    if (law) { law.textContent = msg; law.classList.toggle('warn', mirror || !!tintWins.ws || front.length > 0); }
     if (flash && !reduce) gsap.fromTo(G.uShine, { value: -.15 }, { value: 1.15, duration: 1.1, ease: 'power2.inOut' });
     updateSms();
   }
+  const setPct = v => { targetKeys().forEach(k => { tintWins[k] = { f: tintWins[k] ? tintWins[k].f : 'black', v }; }); };
+  function setFilm(id) {
+    const f = FILM[id];
+    targetKeys().forEach(k => { tintWins[k] = id === 'none' ? null : { f: id, v: f.v ?? (tintWins[k] ? tintWins[k].v : 35) }; });
+    applyTint(true);
+  }
+  function pickTintWin(k) {
+    tintCfg.target = k;
+    state.tintView = k === 'fr' || k === 'rr' ? 'r' : k === 'ws' ? 'f' : null; state.dragTo0 = true; state.dragV = 0;
+    G.uFilmP.value.x = SLOTS.indexOf(k);
+    if (!reduce) gsap.fromTo(G.uFilmP.value, { y: 1 }, { y: 0, duration: .9, ease: 'power2.out', overwrite: true });
+    applyTint(false);
+  }
   if (tintIn) {
-    tintIn.addEventListener('input', () => { tintCfg.rear = TINT[+tintIn.value][0]; applyTint(false); }); // повзунок ходить по реальних плівках
-    tintStops.forEach(b => b.addEventListener('click', () => { tintCfg.rear = TINT[+b.dataset.tintStop][0]; applyTint(true); }));
+    tintIn.addEventListener('input', () => { setPct(TINT[+tintIn.value][0]); applyTint(false); }); // повзунок ходить по реальних плівках
+    tintStops.forEach(b => b.addEventListener('click', () => { setPct(TINT[+b.dataset.tintStop][0]); applyTint(true); }));
     tintIn.addEventListener('change', () => applyTint(true)); // відпустили — по плівці проходить відблиск
   }
-  $$('input[name="tint-front"]').forEach(inp => inp.addEventListener('change', () => { tintCfg.front = inp.value; applyTint(true); }));
+  // каталог плівок: перекриває лише картку, авто лишається видно
+  if (filmPanel) {
+    const groups = [...new Set(FILMS.map(f => f.g))];
+    filmPanel.innerHTML = '<div class="tf-h"><div><b>Усі плівки</b><small>Для: <span data-film-target>усі вікна</span></small></div><button type="button" class="tf-x" data-film-close aria-label="Закрити перелік">✕</button></div>'
+      + groups.map(g => `<p class="tf-g">${g}</p><div class="tf-l">${FILMS.filter(f => f.g === g).map(f => `<button type="button" data-film="${f.id}" aria-pressed="false"><i style="background:${f.sw}"></i><span>${f.n}</span></button>`).join('')}</div>`).join('');
+    const openPanel = on => { filmPanel.hidden = !on; filmOpen.setAttribute('aria-expanded', on); if (on) filmPanel.scrollTop = 0; };
+    filmOpen.addEventListener('click', () => openPanel(filmPanel.hidden));
+    filmPanel.addEventListener('click', e => {
+      const b = e.target.closest('[data-film]'); if (b) setFilm(b.dataset.film);
+      if (e.target.closest('[data-film-close]')) { openPanel(false); filmOpen.focus(); }
+    });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !filmPanel.hidden) { openPanel(false); filmOpen.focus(); } });
+  }
+  winBtns.forEach(b => b.addEventListener('click', () => pickTintWin(b.dataset.winT)));
+  const multiIn = $('#tint-multi');
+  multiIn && multiIn.addEventListener('change', () => {
+    const base = tintWins[curKey()] || { f: 'black', v: 35 }; // зняли галочку — усі вікна знову як вибране
+    tintCfg.multi = multiIn.checked; tintCard.classList.toggle('is-multi', tintCfg.multi); winRow.hidden = !tintCfg.multi;
+    if (tintCfg.multi) { tintCfg.target = 'fl'; }
+    else { WINS_MAIN.forEach(k => { tintWins[k] = { ...base }; }); tintWins.ws = null; state.tintView = null; G.uFilmP.value.y = 0; }
+    applyTint(true);
+  });
   const stripIn = $('#tint-strip'); stripIn && stripIn.addEventListener('change', () => { tintCfg.strip = stripIn.checked; applyTint(true); });
   function updateSms() {
     const a = $('[data-tint-sms]'); if (!a) return;
-    const front = tintCfg.front === 'none' ? '' : `, передні бокові — ${tintCfg.front === '70' ? 70 : tintCfg.rear}%`;
-    a.href = `sms:${PHONE}?&body=` + encodeURIComponent(`Добрий день! Хочу тонування на ${carLabel()}: задні бокові й заднє — ${tintCfg.rear}%${front}${tintCfg.strip ? ', смуга на лобове' : ''}. Скільки коштуватиме і коли можна приїхати?`);
+    const d = c => c ? `${FILM[c.f].n.toLowerCase()} ${c.v}%` : 'без плівки';
+    const what = tintCfg.multi ? (SLOTS.filter(k => tintWins[k]).map(k => `${WIN_NAMES[k]} — ${d(tintWins[k])}`).join(', ') || 'без плівки') : `усі бокові й заднє — ${d(tintWins.fl)}`;
+    a.href = `sms:${PHONE}?&body=` + encodeURIComponent(`Добрий день! Хочу тонування на ${carLabel()}: ${what}${tintCfg.strip ? ', смуга на лобове' : ''}. Скільки коштуватиме?`);
   }
   applyTint(false); G.uTint.value.copy(state.tintTarget);
+  state.filmA.forEach((v, i) => { G.uFilmA.value[i].copy(v); G.uFilmB.value[i].copy(state.filmB[i]); });
 
   /* поява блоків */
   $$('[data-reveal]').forEach(el => {

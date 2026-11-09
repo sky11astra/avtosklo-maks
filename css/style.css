@@ -1023,3 +1023,40 @@ body::after{content:"";position:fixed;inset:-50%;z-index:250;pointer-events:none
 @media (max-height:620px){.tr-ticks{height:32px}}
 /* кнопки розділів на телефоні вгорі — картки можуть стояти нижче й не закривають авто */
 @media (max-width:760px){.ch-tint,.ch-tint.is-on,.ch-req,.ch-req.is-on{bottom:16px}}
+
+/* v11 — каталог плівок і своя плівка на кожне вікно */
+.tf-open{flex:none;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 9px;padding:7px 12px 7px 8px;border:0;border-radius:14px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--line-2);color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background-color .25s,box-shadow .25s}
+.tf-open:hover{background:rgba(255,255,255,.12)}
+.tf-open[aria-expanded="true"]{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tf-open i{grid-row:span 2;width:30px;height:30px;border-radius:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.tf-open span{display:flex;flex-direction:column;min-width:0}
+.tf-open small{font-size:.64rem;color:var(--muted)}
+.tf-open b{font-size:.8rem;font-weight:700;white-space:nowrap}
+.tf-open em{grid-column:2;font-style:normal;font-size:.68rem;font-weight:700;color:var(--accent)}
+.tf-panel{position:absolute;inset:0;z-index:6;padding:14px 16px 18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;border-radius:inherit;background:#0b0f16}
+.tf-panel[hidden]{display:none}
+.tf-h{position:sticky;top:-14px;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-14px -16px 6px;padding:12px 16px 10px;background:#0b0f16}
+.tf-h b{display:block;font-family:var(--f-d);font-size:.95rem;letter-spacing:-.02em}
+.tf-h small{font-size:.74rem;color:var(--glass)}
+.tf-x{flex:none;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.09);color:var(--ink);font-size:.9rem;cursor:pointer}
+.tf-g{margin:12px 0 7px;font-family:var(--f-m);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tf-l{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.tf-l button{display:flex;flex-direction:column;gap:6px;min-width:0;padding:6px 6px 8px;border:0;border-radius:12px;background:rgba(255,255,255,.05);color:var(--ink);font:inherit;font-size:.72rem;line-height:1.2;text-align:left;cursor:pointer;transition:background-color .2s,box-shadow .2s}
+.tf-l button:hover{background:rgba(255,255,255,.1)}
+.tf-l button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent)}
+.tf-l i{display:block;height:34px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.ck{display:flex;align-items:center;gap:10px;min-height:32px;margin-top:2px;font-size:.84rem;font-weight:600;cursor:pointer}
+.ck input{position:absolute;opacity:0;width:0;height:0}
+.ck-b{flex:none;position:relative;width:22px;height:22px;border-radius:6px;box-shadow:inset 0 0 0 1.5px var(--line-2);background:rgba(255,255,255,.05);transition:background-color .2s,box-shadow .2s}
+.ck-b::after{content:"";position:absolute;left:7.5px;top:3.5px;width:5px;height:10px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;rotate:42deg;opacity:0;transition:opacity .15s}
+.ck input:checked + .ck-b{background:var(--accent);box-shadow:none}
+.ck input:checked + .ck-b::after{opacity:1}
+.ck input:focus-visible + .ck-b{outline:2px solid var(--accent);outline-offset:2px}
+.tw-wins{display:flex;gap:6px;margin:6px 0 2px;padding-bottom:2px;overflow-x:auto;scrollbar-width:none}
+.tw-wins[hidden]{display:none}
+.tw-wins::-webkit-scrollbar{display:none}
+.tw-wins button{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 11px 0 8px;border:0;border-radius:999px;background:rgba(255,255,255,.07);color:var(--ink);font:inherit;font-size:.74rem;font-weight:600;white-space:nowrap;cursor:pointer;transition:background-color .2s,color .2s}
+.tw-wins button i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.tw-wins button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.ch-tint.is-multi .sw-strip{display:none}
+.ch-tint .tv{align-items:flex-start;gap:10px}

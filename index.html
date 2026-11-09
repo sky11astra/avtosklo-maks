@@ -35,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="modulepreload" href="js/vendor/three/three.module.min.js">
-<link rel="stylesheet" href="css/style.css?v=102">
+<link rel="stylesheet" href="css/style.css?v=113">
 
 <script type="application/ld+json">
 {
@@ -231,26 +231,21 @@
         <p class="ch-n"><span class="mono">05</span><span>Тонування · <span data-car-name>Jeep Wrangler</span></span></p>
         <div class="tv">
           <div class="tv-read"><output id="tint-out" for="tint" data-tint-out>35%</output><span data-tint-word>середня · салон видно нечітко</span></div>
-          <label class="tv-l" for="tint">Світло&shy;пропускання плівки</label>
+          <button type="button" class="tf-open" data-film-open aria-expanded="false" aria-controls="film-panel"><i data-film-sw></i><span><small>Плівка</small><b data-film-name>Чорна</b></span><em>Усі плівки</em></button>
         </div>
         <div class="tr">
           <input id="tint" type="range" min="0" max="6" step="1" value="3" data-tint aria-describedby="tint-law">
           <div class="tr-ticks" role="group" aria-label="Стандартні плівки"><button type="button" data-tint-stop="0" style="--t:0.00" aria-pressed="false" aria-label="Плівка 5%"><i style="background:#06080a"></i>5</button><button type="button" data-tint-stop="1" style="--t:16.67" aria-pressed="false" aria-label="Плівка 15%"><i style="background:#12171c"></i>15</button><button type="button" data-tint-stop="2" style="--t:33.33" aria-pressed="false" aria-label="Плівка 20%"><i style="background:#1b2228"></i>20</button><button type="button" data-tint-stop="3" style="--t:50.00" aria-pressed="true" aria-label="Плівка 35%"><i style="background:#2f3a43"></i>35</button><button type="button" data-tint-stop="4" style="--t:66.67" aria-pressed="false" aria-label="Плівка 50%"><i style="background:#47545e"></i>50</button><button type="button" data-tint-stop="5" style="--t:83.33" aria-pressed="false" aria-label="Плівка 70%"><i style="background:#6d7e8a"></i>70</button><button type="button" data-tint-stop="6" style="--t:100.00" aria-pressed="false" aria-label="Плівка 80%"><i style="background:#8c9fab"></i>80</button></div>
         </div>
-        <fieldset class="tw">
-          <legend class="vh">Які скла тонувати</legend>
-          <div class="seg">
-            <label><input type="radio" name="tint-front" value="none"><span>Лише задні</span></label>
-            <label><input type="radio" name="tint-front" value="70"><span>+ передні 70%</span></label>
-            <label><input type="radio" name="tint-front" value="same" checked><span>Усі однаково</span></label>
-          </div>
-        </fieldset>
-        <label class="sw"><input type="checkbox" id="tint-strip"><span class="sw-t" aria-hidden="true"></span>Смуга зверху лобового</label>
-        <p class="tint-law" id="tint-law" data-tint-law aria-live="polite">Відповідає ПДР: передні бокові — не темніше 70%, задні — будь-які.</p>
+        <label class="ck"><input type="checkbox" id="tint-multi"><span class="ck-b" aria-hidden="true"></span>Кожне вікно — своя плівка</label>
+        <div class="tw-wins" data-win-row role="group" aria-label="Оберіть вікно" hidden><button type="button" data-win-t="fl" aria-pressed="false"><i></i>Перед. ліве</button><button type="button" data-win-t="fr" aria-pressed="false"><i></i>Перед. праве</button><button type="button" data-win-t="rl" aria-pressed="false"><i></i>Зад. ліве</button><button type="button" data-win-t="rr" aria-pressed="false"><i></i>Зад. праве</button><button type="button" data-win-t="rw" aria-pressed="false"><i></i>Заднє скло</button><button type="button" data-win-t="ws" aria-pressed="false"><i></i>Лобове</button></div>
+        <label class="sw sw-strip"><input type="checkbox" id="tint-strip"><span class="sw-t" aria-hidden="true"></span>Смуга зверху лобового</label>
+        <p class="tint-law" id="tint-law" data-tint-law aria-live="polite"></p>
         <div class="tint-act">
           <a class="btn btn-sm" data-tint-sms href="sms:+380504332288">Надіслати майстру</a>
           <p class="tint-sum">Тонування — від 1000 грн</p>
         </div>
+        <div class="tf-panel" id="film-panel" data-film-panel data-lenis-prevent hidden></div>
       </article>
 
       <!-- заявка: позначити пошкоджене скло -->
@@ -694,6 +689,6 @@
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/vendor/lenis.min.js" defer></script>
-<script type="module" src="js/app.js?v=102"></script>
+<script type="module" src="js/app.js?v=113"></script>
 </body>
 </html>
