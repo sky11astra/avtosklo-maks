@@ -731,10 +731,11 @@ async function init3D() {
     const sr = current.sunroof; if (sr) { sr.material.uniforms.uOn.value = roofOn * (roofGlass ? .35 : .3); sr.visible = roofOn > .01 && roofGlass > 0; }
     G.uRoofGlow.value = roofOn * (1 - roofGlass) * (.75 + .25 * Math.sin(t * 3));
     // вибране вікно світиться й показує скол лише в розділі заявки
-    G.uSel.value.z = state.selGlow * reqW; G.uChipOn.value = state.chipGrow * reqW;
+    const dmgW = state.chapter === 5 ? 0 : reqW; // у «Тонуванні» — лише плівка, жодних пошкоджень
+    G.uSel.value.z = state.selGlow * dmgW; G.uChipOn.value = state.chipGrow * dmgW;
     // тріщина на лобовому
     const w1 = c - 1; let grow = 0, heal = 0, on = 0;
-    if (w1 > -.6 && w1 < 1) { on = 1; grow = clamp((w1 + .6) / .75, 0, 1); heal = clamp((w1 - .3) / .55, 0, 1); }
+    if (state.chapter !== 5 && w1 > -.6 && w1 < 1) { on = 1; grow = clamp((w1 + .6) / .75, 0, 1); heal = clamp((w1 - .3) / .55, 0, 1); }
     crackT.set(grow); G.uCrackOn.value = on; G.uHeal.value = heal >= 1 ? 1.01 : heal;
     // тонування
     G.uTintOn.value = lerp(G.uTintOn.value, c > 4.4 && c < 5.6 ? 1 : 0, 1 - Math.pow(.05, dt));
@@ -744,7 +745,7 @@ async function init3D() {
     scene.environmentRotation.y = t * .05;
     renderer.render(scene, camera);
     hotspots(heroW);
-    pin(reqW);
+    pin(dmgW);
   }
 
   // точки на склі, що «прилипли» до 3D-моделі
@@ -1085,7 +1086,7 @@ async function main() {
   canvas.addEventListener('pointerup', e => {
     if (!tap || !E) return;
     const far = Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 7 || performance.now() - tap.t > 600; tap = null;
-    if (far) return;
+    if (far || state.chapter === 5) return; // у «Тонуванні» дотик не робить тріщин
     const hit = E.pick(e.clientX, e.clientY); if (!hit) return;
     setSel(hit);
     if (state.c < 5.5) goCh(6);
