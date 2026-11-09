@@ -1,4 +1,4 @@
-/* Автоскло-Макс v9 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
+/* Автоскло-Макс v10 — 3D-шоурум з чотирма авто, тонуванням по зонах і сторінка */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -239,8 +239,9 @@ vlt = mix(vlt, uTint.z, zR);
 vlt = mix(vlt, .2, strip);
 float aBase = mix(.2, mix(.32, .48, clamp(zSF + zSR + zR + zT, 0., 1.)), zWin);
 float tK = uTintOn * clamp(zW + zSF + zSR + zR, 0., 1.); // у розділі «Тонування» скло живе від повзунка
-float aOut = mix(aBase, 1.0 - vlt * .52, tK);
-vec3 filmC = vec3(.29, .37, .44) * pow(vlt, 1.7) + outgoingLight * mix(.12, .5, vlt); // світлість не залежить від кольору салону
+float t2 = vlt * vlt; // світло проходить плівку двічі: у салон і назад до очей
+float aOut = mix(aBase, 1.0 - t2 * .78, tK);
+vec3 filmC = vec3(.29, .37, .44) * t2 + outgoingLight * mix(.12, .5, vlt); // світлість не залежить від кольору салону
 outgoingLight = mix(outgoingLight, filmC, tK);
 float film = clamp(zSF * step(uTint.x, .99) + zSR * step(uTint.y, .99) + zR * step(uTint.z, .99) + strip, 0., 1.) * uTintOn;
 float shine = film * smoothstep(.07, 0., abs((1.0 - q.z) - uShine));
@@ -719,7 +720,7 @@ async function init3D() {
     if (Math.abs(camera.fov - curFov) > .01) { camera.fov = curFov; camera.updateProjectionMatrix(); }
     const mob = isMobile();
     const targetShift = mob ? 0 : lerp(sideOf[i], sideOf[j], f) * -.2 * (c > .5 ? 1 : c * 2);
-    const targetOffY = mob ? (c < .5 ? (band ?? .1) : c > 5.5 ? .14 : c > 4.5 ? .2 : .18) : (c < .5 ? .15 : .02);
+    const targetOffY = mob ? (c < .5 ? (band ?? .1) : c > 5.5 ? .1 : c > 4.5 ? .16 : .18) : (c < .5 ? .15 : .02);
     curShift = lerp(curShift, targetShift, k); curOffY = lerp(curOffY, targetOffY, k);
     const w = renderer.domElement.width, h = renderer.domElement.height;
     camera.setViewOffset(w, h, -curShift * w, curOffY * h, w, h);
@@ -1126,20 +1127,27 @@ async function main() {
   /* тонування */
   state.tintTarget = new THREE.Vector4();
   const law = $('[data-tint-law]'), tintIn = $('[data-tint]'), tintOut = $('[data-tint-out]'), tintWord = $('[data-tint-word]');
-  const tintWordOf = v => v < 10 ? 'як у лімузина' : v < 20 ? 'дуже темна' : v < 35 ? 'темна' : v < 50 ? 'середня' : v < 70 ? 'легка' : 'ледь помітна';
+  // стандартний ринковий ряд плівок: % світлопропускання (VLT) і як це виглядає
+  const TINT = [[5, 'лімузин · салон не видно'], [15, 'дуже темна · салон майже не видно'], [20, 'темна · салон видно лише впритул'], [35, 'середня · салон видно нечітко'], [50, 'світла · легке затемнення'], [70, 'майже прозора'], [80, 'прозора · як заводське скло']];
+  const tintStops = $$('[data-tint-stop]');
   function applyTint(flash) {
     const r = tintCfg.rear / 100, fr = tintCfg.front === 'none' ? 1 : tintCfg.front === '70' ? .7 : r;
     state.tintTarget.set(fr, r, r, tintCfg.strip ? 1 : 0);
-    if (tintIn) { const tr = tintIn.closest('.tr'); if (tr) tr.style.setProperty('--v', ((tintCfg.rear - 5) / .8).toFixed(1) + '%'); }
+    const stop = TINT.findIndex(t => t[0] === tintCfg.rear);
+    tintStops.forEach((b, i) => b.setAttribute('aria-pressed', i === stop));
+    if (tintIn) { tintIn.value = stop; tintIn.setAttribute('aria-valuetext', `${tintCfg.rear}%, ${TINT[stop][1]}`); }
     if (tintOut) tintOut.textContent = tintCfg.rear + '%';
-    if (tintWord) tintWord.textContent = tintWordOf(tintCfg.rear);
+    if (tintWord) tintWord.textContent = TINT[stop][1];
     const bad = fr < .7;
-    if (law) { law.textContent = bad ? `Передні бокові ${tintCfg.rear}% — темніше дозволених 70%. Таку плівку ставимо лише на задні.` : 'Відповідає ПДР: передні бокові — не темніше 70%, задні — будь-які.'; law.classList.toggle('warn', bad); }
+    // норма стосується скла разом із плівкою: відсотки множаться, тож плівка 70% на заводському склі дає менше 70%
+    const filmFront = !bad && fr < 1;
+    if (law) { law.textContent = bad ? `Передні бокові темніші за норму 70%. Таку плівку ставимо лише на задні.` : filmFront ? `Зі склом вийде темніше за ${Math.round(fr * 100)}%, а норма для передніх — 70%. Майстер заміряє приладом.` : 'Відповідає ПДР: передні бокові без плівки, задні — будь-які.'; law.classList.toggle('warn', bad || filmFront); }
     if (flash && !reduce) gsap.fromTo(G.uShine, { value: -.15 }, { value: 1.15, duration: 1.1, ease: 'power2.inOut' });
     updateSms();
   }
   if (tintIn) {
-    tintIn.addEventListener('input', () => { tintCfg.rear = +tintIn.value; applyTint(false); }); // скло темнішає, поки тягнете
+    tintIn.addEventListener('input', () => { tintCfg.rear = TINT[+tintIn.value][0]; applyTint(false); }); // повзунок ходить по реальних плівках
+    tintStops.forEach(b => b.addEventListener('click', () => { tintCfg.rear = TINT[+b.dataset.tintStop][0]; applyTint(true); }));
     tintIn.addEventListener('change', () => applyTint(true)); // відпустили — по плівці проходить відблиск
   }
   $$('input[name="tint-front"]').forEach(inp => inp.addEventListener('change', () => { tintCfg.front = inp.value; applyTint(true); }));

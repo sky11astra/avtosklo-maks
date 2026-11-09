@@ -35,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="modulepreload" href="js/vendor/three/three.module.min.js">
-<link rel="stylesheet" href="css/style.css?v=93">
+<link rel="stylesheet" href="css/style.css?v=102">
 
 <script type="application/ld+json">
 {
@@ -230,12 +230,12 @@
       <article class="ch ch-r ch-tint" data-ch="5">
         <p class="ch-n"><span class="mono">05</span><span>Тонування · <span data-car-name>Jeep Wrangler</span></span></p>
         <div class="tv">
-          <div class="tv-read"><output id="tint-out" for="tint" data-tint-out>35%</output><span data-tint-word>середня</span></div>
-          <label class="tv-l" for="tint">Світлопропускання плівки</label>
+          <div class="tv-read"><output id="tint-out" for="tint" data-tint-out>35%</output><span data-tint-word>середня · салон видно нечітко</span></div>
+          <label class="tv-l" for="tint">Світло&shy;пропускання плівки</label>
         </div>
-        <div class="tr" style="--v:37.5%">
-          <input id="tint" type="range" min="5" max="85" step="1" value="35" data-tint aria-describedby="tint-law">
-          <div class="tr-ticks" aria-hidden="true"><span style="--t:0">5</span><span style="--t:12.5">15</span><span style="--t:18.75">20</span><span style="--t:37.5">35</span><span style="--t:56.25">50</span><span style="--t:81.25">70</span></div>
+        <div class="tr">
+          <input id="tint" type="range" min="0" max="6" step="1" value="3" data-tint aria-describedby="tint-law">
+          <div class="tr-ticks" role="group" aria-label="Стандартні плівки"><button type="button" data-tint-stop="0" style="--t:0.00" aria-pressed="false" aria-label="Плівка 5%"><i style="background:#06080a"></i>5</button><button type="button" data-tint-stop="1" style="--t:16.67" aria-pressed="false" aria-label="Плівка 15%"><i style="background:#12171c"></i>15</button><button type="button" data-tint-stop="2" style="--t:33.33" aria-pressed="false" aria-label="Плівка 20%"><i style="background:#1b2228"></i>20</button><button type="button" data-tint-stop="3" style="--t:50.00" aria-pressed="true" aria-label="Плівка 35%"><i style="background:#2f3a43"></i>35</button><button type="button" data-tint-stop="4" style="--t:66.67" aria-pressed="false" aria-label="Плівка 50%"><i style="background:#47545e"></i>50</button><button type="button" data-tint-stop="5" style="--t:83.33" aria-pressed="false" aria-label="Плівка 70%"><i style="background:#6d7e8a"></i>70</button><button type="button" data-tint-stop="6" style="--t:100.00" aria-pressed="false" aria-label="Плівка 80%"><i style="background:#8c9fab"></i>80</button></div>
         </div>
         <fieldset class="tw">
           <legend class="vh">Які скла тонувати</legend>
@@ -694,6 +694,6 @@
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/vendor/lenis.min.js" defer></script>
-<script type="module" src="js/app.js?v=93"></script>
+<script type="module" src="js/app.js?v=102"></script>
 </body>
 </html>
